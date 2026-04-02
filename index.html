@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Loop Creator - Auto-Harmonize v17.1</title>
+    <title>System Loop Creator - Cloud Fix v17.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
@@ -41,7 +41,6 @@
         .node { 
             position: absolute; padding: 10px 18px; background: rgba(15, 23, 42, 0.95); border: 2px solid #10b981; border-radius: 9999px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); 
             user-select: none; z-index: 30; min-width: 100px; text-align: center; font-weight: 700; color: #fff; backdrop-filter: blur(12px); transform: translate(-50%, -50%); font-size: 12px; cursor: grab;
-            /* ドラッグ後の自動整列時に滑らかに動かすためのトランジション */
             transition: left 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1);
         }
         .node:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.1); transition: none; }
@@ -101,7 +100,7 @@
             </div>
             <div class="flex flex-col">
                 <h1 class="text-xs font-black text-white tracking-tighter italic text-emerald-400 leading-none">Cloud Orchestrator</h1>
-                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v17.1 auto-harmonize</span>
+                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v17.2 cloud fix</span>
             </div>
         </div>
         
@@ -137,13 +136,15 @@
             <button onclick="closeCloudManager()" class="text-slate-400 font-bold mb-8 flex items-center gap-2">← Back</button>
             <h2 class="text-2xl font-black mb-8 text-emerald-400 italic">Cloud Manager</h2>
             <div class="mb-10 bg-slate-900/50 p-6 rounded-2xl border border-emerald-500/20">
-                <!-- Mobile Optimized Save Section -->
                 <div class="flex flex-col gap-3">
                     <input type="text" id="save-title" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-bold" placeholder="プロジェクト名...">
-                    <button onclick="saveToCloud()" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-xs">SAVE PROJECT</button>
+                    <button id="save-btn" onclick="saveToCloud()" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-xs">SAVE PROJECT</button>
                 </div>
             </div>
-            <div id="cloud-list" class="space-y-3"></div>
+            <h3 class="text-[10px] text-slate-500 font-black uppercase mb-4 tracking-widest">Stored Projects</h3>
+            <div id="cloud-list" class="space-y-3">
+                <div class="text-center py-10 text-slate-600 text-xs italic">SYNCボタンを押してデータを取得してください</div>
+            </div>
         </div>
     </div>
 
@@ -199,6 +200,9 @@
         let currentDetailNodeId = null;
         let dragTargetId = null;
         
+        // プロジェクトキャッシュ（エスケープ問題を回避するため）
+        let cloudProjectCache = [];
+        
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyo1o9FAANNVckA2HFtsxiC8PjOjytLCzTGs0bVuAZqYoLrMcxxckUO27uzJM38gi_6Gg/exec";
         let gasUrl = localStorage.getItem('gas_url') || DEFAULT_GAS_URL;
 
@@ -206,7 +210,7 @@
         const svg = document.getElementById('svg-layer');
 
         window.onload = () => {
-            const saved = localStorage.getItem('system_loops_v17_1');
+            const saved = localStorage.getItem('system_loops_v17_2');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
@@ -301,13 +305,11 @@
             if (dragTargetId) {
                 document.querySelector(`.node[data-id="${dragTargetId}"]`)?.classList.remove('dragging');
                 dragTargetId = null;
-                // --- 順序を角度で並べ替えたあと、即座に均等配置にスナップさせる ---
                 reorderAndHarmonize();
                 syncLocal();
             }
         }
 
-        // --- 移動後に順序を確定させ、均等配置へスナップする機能 ---
         function reorderAndHarmonize() {
             if (nodes.length < 2) return;
             nodes.sort((a, b) => {
@@ -315,51 +317,119 @@
                 let angB = b.baseAngle % (2 * Math.PI); if (angB < 0) angB += 2 * Math.PI;
                 return angA - angB;
             });
-            // ここで均等配置の再計算を実行（すべてのドラッグフラグをリセット）
             alignOrbit(true);
-            showToast("順序を確定し整列しました");
         }
 
         async function fetchCloudList() {
             const listEl = document.getElementById('cloud-list');
-            listEl.innerHTML = '<div class="text-center py-10 text-slate-600 text-xs italic">Fetching...</div>';
+            if (!gasUrl) {
+                listEl.innerHTML = '<div class="text-center py-10 text-red-400 text-xs italic">SettingsからURLを設定してください</div>';
+                return;
+            }
+            
+            listEl.innerHTML = '<div class="text-center py-10 text-slate-600 text-xs italic">取得中...</div>';
+            
             try {
-                const res = await fetch(gasUrl); const list = await res.json();
-                listEl.innerHTML = list.length === 0 ? '<div class="text-center py-10 text-slate-600 text-xs">No projects.</div>' : "";
-                list.reverse().forEach(item => {
-                    const div = document.createElement('div'); div.className = 'cloud-item';
+                const res = await fetch(gasUrl, { redirect: 'follow' });
+                const list = await res.json();
+                
+                if (!Array.isArray(list)) {
+                    console.error("Expected array but got:", list);
+                    listEl.innerHTML = '<div class="text-center py-10 text-red-400 text-xs italic">データの形式が正しくありません</div>';
+                    return;
+                }
+
+                cloudProjectCache = list; // キャッシュに保存
+                
+                listEl.innerHTML = list.length === 0 ? '<div class="text-center py-10 text-slate-600 text-xs">保存されたプロジェクトはありません</div>' : "";
+                
+                // 新しい順に表示
+                [...list].reverse().forEach((item, index) => {
+                    const actualIndex = list.length - 1 - index; // 元の配列でのインデックス
+                    const div = document.createElement('div'); 
+                    div.className = 'cloud-item';
+                    const date = item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown Date";
+                    
                     div.innerHTML = `
-                        <div class="flex flex-col"><span class="text-emerald-400 font-bold text-sm">${item.title}</span><span class="text-[8px] text-slate-500 font-bold">${new Date(item.timestamp).toLocaleString()}</span></div>
-                        <button onclick='loadFromCloud(${JSON.stringify(item.data)}, "${item.title}")' class="px-4 py-2 bg-slate-800 text-emerald-400 rounded-lg text-[10px] font-black">LOAD</button>
+                        <div class="flex flex-col">
+                            <span class="text-emerald-400 font-bold text-sm">${item.title || "Untitled"}</span>
+                            <span class="text-[8px] text-slate-500 font-bold">${date}</span>
+                        </div>
+                        <button onclick="loadFromCache(${actualIndex})" class="px-4 py-2 bg-slate-800 text-emerald-400 rounded-lg text-[10px] font-black border border-emerald-500/20">LOAD</button>
                     `;
                     listEl.appendChild(div);
                 });
-            } catch (e) { listEl.innerHTML = "Error."; }
+                showToast("データ同期完了");
+            } catch (e) { 
+                console.error("Fetch Error:", e);
+                listEl.innerHTML = `<div class="text-center py-10 text-red-400 text-xs italic">通信エラーが発生しました。<br>URLが正しいか確認してください。</div>`; 
+            }
+        }
+
+        function loadFromCache(index) {
+            const project = cloudProjectCache[index];
+            if (!project || !project.data) {
+                showToast("プロジェクトデータの読み込みに失敗しました");
+                return;
+            }
+            
+            const data = project.data;
+            nodes = data.nodes || []; 
+            connections = data.connections || []; 
+            solutions = data.solutions || {};
+            
+            distributeNodes(); 
+            render(); 
+            syncLocal(); 
+            closeCloudManager(); 
+            showToast("「" + project.title + "」を読み込みました");
         }
 
         async function saveToCloud() {
-            const title = document.getElementById('save-title').value.trim(); if (!title) return;
-            const btn = document.querySelector('#cloud-view button[onclick="saveToCloud()"]');
+            const title = document.getElementById('save-title').value.trim(); 
+            if (!title) {
+                showToast("タイトルを入力してください");
+                return;
+            }
+            
+            const btn = document.getElementById('save-btn');
             btn.innerText = "SAVING..."; btn.disabled = true;
+            
             try {
-                await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ title, data: { nodes, connections, solutions } }) });
-                setTimeout(() => { btn.innerText = "SAVE PROJECT"; btn.disabled = false; fetchCloudList(); showToast("保存完了"); }, 1000);
-            } catch (e) { showToast("保存失敗"); btn.disabled = false; }
-        }
-
-        function loadFromCloud(data, title) {
-            nodes = data.nodes || []; connections = data.connections || []; solutions = data.solutions || {};
-            distributeNodes(); render(); syncLocal(); closeCloudManager(); showToast("読み込み完了");
+                // mode: 'no-cors'はGASの仕様上必要ですが、レスポンスの中身は読めません。
+                // そのため成功を仮定して1秒後にリストを更新します。
+                await fetch(gasUrl, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, data: { nodes, connections, solutions } }) 
+                });
+                
+                setTimeout(() => { 
+                    btn.innerText = "SAVE PROJECT"; 
+                    btn.disabled = false; 
+                    fetchCloudList(); 
+                    showToast("保存リクエストを送信しました"); 
+                }, 1000);
+            } catch (e) { 
+                showToast("保存に失敗しました"); 
+                btn.disabled = false; 
+                console.error("Save Error:", e);
+            }
         }
 
         function openCloudManager() { document.getElementById('cloud-view').classList.add('active-view'); fetchCloudList(); }
         function closeCloudManager() { document.getElementById('cloud-view').classList.remove('active-view'); }
         function openSettings() { document.getElementById('settings-view').classList.add('active-view'); }
         function closeSettings() { document.getElementById('settings-view').classList.remove('active-view'); }
-        function saveSettings() { gasUrl = document.getElementById('gas-url-input').value; localStorage.setItem('gas_url', gasUrl); showToast("URL設定保存"); closeSettings(); }
+        function saveSettings() { 
+            gasUrl = document.getElementById('gas-url-input').value; 
+            localStorage.setItem('gas_url', gasUrl); 
+            showToast("URL設定を保存しました"); 
+            closeSettings(); 
+        }
         function openNodeModal() { document.getElementById('node-modal').classList.add('active'); setTimeout(() => document.getElementById('node-input').focus(), 100); }
         function closeNodeModal() { document.getElementById('node-modal').classList.remove('active'); document.getElementById('node-input').value = ''; }
-        
         function addNode() { 
             const label = document.getElementById('node-input').value; 
             if (!label) return; 
@@ -485,8 +555,8 @@
             if (textEl) textEl.innerText = hint.text;
         }
 
-        function syncLocal() { localStorage.setItem('system_loops_v17_1', JSON.stringify({nodes, connections, solutions})); }
-        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v17_1'); nodes=[]; connections=[]; solutions={}; render(); } }
+        function syncLocal() { localStorage.setItem('system_loops_v17_2', JSON.stringify({nodes, connections, solutions})); }
+        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v17_2'); nodes=[]; connections=[]; solutions={}; render(); } }
     </script>
 </body>
 </html>
