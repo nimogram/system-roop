@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Loop Creator - Mobile Optimized v16.2</title>
+    <title>System Loop Creator - Clean Core v16.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
@@ -147,7 +147,7 @@
             </div>
             <div class="flex flex-col">
                 <h1 class="text-xs font-black text-white tracking-tighter italic text-emerald-400 leading-none">Cloud Orchestrator</h1>
-                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v16.2 mobile optimized</span>
+                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v16.3 clean core</span>
             </div>
         </div>
         
@@ -176,7 +176,6 @@
         </div>
     </div>
 
-    <!-- Cloud Manager View: Mobile Optimized -->
     <div id="cloud-view" class="view-modal">
         <div class="max-w-md mx-auto">
             <button onclick="closeCloudManager()" class="text-slate-400 font-bold mb-8 flex items-center gap-2">← Back to Loop</button>
@@ -184,7 +183,7 @@
             
             <div class="mb-10 bg-slate-900/50 p-6 rounded-2xl border border-emerald-500/20">
                 <label class="text-[10px] text-slate-500 font-black uppercase mb-3 block tracking-widest">New Save / Overwrite Title</label>
-                <div class="flex flex-col gap-3"> <!-- flex-colに変更 -->
+                <div class="flex flex-col gap-3">
                     <input type="text" id="save-title" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-bold" placeholder="プロジェクト名を入力...">
                     <button onclick="saveToCloud()" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-900/40">SAVE PROJECT</button>
                 </div>
@@ -202,7 +201,6 @@
     </button>
     <button onclick="openNodeModal()" class="fab fab-add">＋</button>
 
-    <!-- Detail View -->
     <div id="detail-view" class="view-modal">
         <div class="max-w-md mx-auto h-full flex flex-col pb-10">
             <button onclick="closeDetail()" class="text-slate-400 font-bold mb-6">← Back</button>
@@ -217,7 +215,6 @@
         </div>
     </div>
 
-    <!-- Settings View -->
     <div id="settings-view" class="view-modal">
         <div class="max-w-md mx-auto">
             <button onclick="closeSettings()" class="text-slate-400 font-bold mb-10">← Back</button>
@@ -236,7 +233,6 @@
         <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px] shadow-2xl backdrop-blur-md">極性切替</button>
     </div>
 
-    <!-- Modals -->
     <div id="node-modal" class="modal p-6">
         <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl">
             <h2 class="text-lg font-black mb-1 text-white text-center italic text-emerald-400">Feed Data</h2>
@@ -348,7 +344,6 @@
         let pendingInsertIndex = -1;
         let currentDetailNodeId = null;
         
-        // --- GAS URL Integrated ---
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyo1o9FAANNVckA2HFtsxiC8PjOjytLCzTGs0bVuAZqYoLrMcxxckUO27uzJM38gi_6Gg/exec";
         let gasUrl = localStorage.getItem('gas_url') || DEFAULT_GAS_URL;
 
@@ -360,7 +355,7 @@
         const orbitPath = document.getElementById('orbit-path');
 
         window.onload = () => {
-            const saved = localStorage.getItem('system_loops_v16_2');
+            const saved = localStorage.getItem('system_loops_v16_3');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
@@ -435,7 +430,6 @@
             connections = newConnections;
         }
 
-        /* ---------------- Cloud Actions ---------------- */
         function openCloudManager() {
             document.getElementById('cloud-view').classList.add('active-view');
             fetchCloudList();
@@ -505,7 +499,6 @@
             closeCloudManager();
         }
 
-        /* ---------------- Common Logic ---------------- */
         function openSettings() { document.getElementById('settings-view').classList.add('active-view'); }
         function closeSettings() { document.getElementById('settings-view').classList.remove('active-view'); }
         function saveSettings() { 
@@ -648,8 +641,8 @@
             syncLocal();
         }
 
-        function syncLocal() { localStorage.setItem('system_loops_v16_2', JSON.stringify({nodes, connections, solutions})); }
-        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v16_2'); nodes=[]; connections=[]; solutions={}; render(); displayRandomHint(); } }
+        function syncLocal() { localStorage.setItem('system_loops_v16_3', JSON.stringify({nodes, connections, solutions})); }
+        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v16_3'); nodes=[]; connections=[]; solutions={}; render(); displayRandomHint(); } }
     </script>
 </body>
 </html>
