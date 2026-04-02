@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Loop Creator - Insight Tracker v15.4</title>
+    <title>System Loop Creator - Cloud Manager v16.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
@@ -11,7 +11,7 @@
         #canvas-container { 
             position: relative; 
             width: 100vw; 
-            height: calc(100vh - 120px); 
+            height: calc(100vh - 114px); 
             overflow: hidden; 
             background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
             animation: fadeIn 1s ease-out;
@@ -20,15 +20,14 @@
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        header { position: relative; z-index: 100; }
+        header { position: relative; z-index: 100; height: 60px; }
 
-        /* ヒントバナーのスタイル: カテゴリーなし、黄色テキスト */
         #hint-banner {
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(16, 185, 129, 0.1);
-            padding: 14px 28px;
-            min-height: 54px;
+            padding: 10px 28px;
+            height: 54px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -100,7 +99,7 @@
         .label-s { fill: #10b981; font-weight: 900; font-size: 14px; opacity: 0.8; }
         .label-o { fill: #f43f5e; font-weight: 900; font-size: 14px; opacity: 0.8; }
 
-        #detail-view, #settings-view {
+        .view-modal {
             display: none; position: fixed; inset: 0; background: #020617; z-index: 300; padding: 24px; overflow-y: auto;
         }
         .active-view { display: block !important; animation: slideIn 0.3s cubic-bezier(0.23, 1, 0.32, 1); }
@@ -127,6 +126,14 @@
         }
         .header-btn:active { background: #10b981; color: #020617; }
 
+        .cloud-item {
+            background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 16px; border-radius: 16px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: all 0.2s;
+        }
+        .cloud-item:hover { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        
         .loader { width: 12px; height: 12px; border: 2px solid #10b981; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -140,12 +147,12 @@
             </div>
             <div class="flex flex-col">
                 <h1 class="text-xs font-black text-white tracking-tighter italic text-emerald-400 leading-none">Cloud Orchestrator</h1>
-                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v15.4 insight tracker</span>
+                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v16.0 cloud manager</span>
             </div>
         </div>
         
         <div class="flex items-center gap-3">
-            <button onclick="cloudSync()" class="header-btn">
+            <button onclick="openCloudManager()" class="header-btn">
                 <span id="sync-icon">☁️ SYNC</span>
                 <div id="sync-loader" class="loader"></div>
             </button>
@@ -153,6 +160,7 @@
         </div>
     </header>
 
+    <!-- ヒント表示エリア -->
     <div id="hint-banner">
         <span id="hint-text"></span>
     </div>
@@ -169,26 +177,34 @@
         </div>
     </div>
 
+    <!-- Cloud Manager View -->
+    <div id="cloud-view" class="view-modal">
+        <div class="max-w-md mx-auto">
+            <button onclick="closeCloudManager()" class="text-slate-400 font-bold mb-8 flex items-center gap-2">← Back to Loop</button>
+            <h2 class="text-2xl font-black mb-8 text-emerald-400 italic">Cloud Manager</h2>
+            
+            <div class="mb-10 bg-slate-900/50 p-6 rounded-2xl border border-emerald-500/20">
+                <label class="text-[10px] text-slate-500 font-black uppercase mb-3 block tracking-widest">New Save / Overwrite Title</label>
+                <div class="flex gap-2">
+                    <input type="text" id="save-title" class="flex-1 p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-bold" placeholder="プロジェクト名を入力...">
+                    <button onclick="saveToCloud()" class="px-6 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-900/40">SAVE</button>
+                </div>
+            </div>
+
+            <h3 class="text-[10px] text-slate-500 font-black uppercase mb-4 tracking-widest">Stored Projects</h3>
+            <div id="cloud-list" class="space-y-3">
+                <div class="text-center py-10 text-slate-600 text-xs italic">Loading projects...</div>
+            </div>
+        </div>
+    </div>
+
     <button onclick="openSettings()" class="fab fab-settings" aria-label="Settings">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
     </button>
     <button onclick="openNodeModal()" class="fab fab-add">＋</button>
 
-    <div id="settings-view">
-        <div class="max-w-md mx-auto">
-            <button onclick="closeSettings()" class="text-slate-400 font-bold mb-10 flex items-center gap-2">← Back</button>
-            <h2 class="text-2xl font-black mb-8 text-emerald-400 italic">Configuration</h2>
-            <div class="space-y-6">
-                <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-                    <label class="text-[10px] text-slate-500 font-black uppercase mb-3 block">GAS Web App URL</label>
-                    <input type="text" id="gas-url" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-mono text-xs" placeholder="https://script.google.com/macros/s/.../exec">
-                </div>
-                <button onclick="saveSettings()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-900/40">APPLY & SAVE</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="detail-view">
+    <!-- Detail View -->
+    <div id="detail-view" class="view-modal">
         <div class="max-w-md mx-auto h-full flex flex-col pb-10">
             <button onclick="closeDetail()" class="text-slate-400 font-bold mb-6">← Back</button>
             <div id="detail-node-label" class="text-2xl font-black text-emerald-400 mb-8 border-l-4 border-emerald-500 pl-4">Variable Name</div>
@@ -202,14 +218,30 @@
         </div>
     </div>
 
+    <!-- Settings View -->
+    <div id="settings-view" class="view-modal">
+        <div class="max-w-md mx-auto">
+            <button onclick="closeSettings()" class="text-slate-400 font-bold mb-10">← Back</button>
+            <h2 class="text-2xl font-black mb-8 text-emerald-400 italic">Configuration</h2>
+            <div class="space-y-6">
+                <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                    <label class="text-[10px] text-slate-500 font-black uppercase mb-3 block">GAS Web App URL</label>
+                    <input type="text" id="gas-url" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-mono text-xs" placeholder="https://script.google.com/macros/s/.../exec">
+                </div>
+                <button onclick="saveSettings()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black">APPLY & SAVE</button>
+            </div>
+        </div>
+    </div>
+
     <div id="bottom-nav" class="fixed bottom-0 left-0 w-full p-10 px-24 flex items-center justify-center pointer-events-none">
         <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px] shadow-2xl backdrop-blur-md">極性切替</button>
     </div>
 
+    <!-- Modals -->
     <div id="node-modal" class="modal p-6">
         <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl">
             <h2 class="text-lg font-black mb-1 text-white text-center italic text-emerald-400">Feed Data</h2>
-            <input type="text" id="node-input" class="w-full p-4 bg-slate-800/50 border border-slate-700 text-white rounded-xl mb-6 focus:border-emerald-500 outline-none font-bold text-center text-lg" placeholder="...">
+            <input type="text" id="node-input" class="w-full p-4 bg-slate-800/50 border border-slate-700 text-white rounded-xl mb-6 focus:border-emerald-500 outline-none font-bold text-center text-lg shadow-inner" placeholder="...">
             <div class="flex gap-3">
                 <button onclick="closeNodeModal()" class="flex-1 py-4 text-slate-500 font-bold text-xs">CANCEL</button>
                 <button onclick="addNode()" class="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black uppercase shadow-lg shadow-emerald-900/20">Engage</button>
@@ -325,7 +357,7 @@
         const orbitPath = document.getElementById('orbit-path');
 
         window.onload = () => {
-            const saved = localStorage.getItem('system_loops_v15_4');
+            const saved = localStorage.getItem('system_loops_v16_0');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
@@ -338,11 +370,8 @@
             updateOrbitUI();
             distributeNodes();
             render();
-            
-            // 初回表示 & 8秒サイクル開始
             displayRandomHint();
             hintInterval = setInterval(displayRandomHint, 8000);
-            
             requestAnimationFrame(animate);
         };
 
@@ -352,45 +381,39 @@
             if (typingTimer) clearInterval(typingTimer);
             const hint = hintsList[Math.floor(Math.random() * hintsList.length)];
             const textEl = document.getElementById('hint-text');
-            
             textEl.innerText = "";
             let i = 0;
-            // 1文字120ms (Contemplative speed)
             typingTimer = setInterval(() => {
                 if (i < hint.text.length) {
-                    textEl.innerText += hint.text.charAt(i);
-                    i++;
-                } else {
-                    clearInterval(typingTimer);
-                }
+                    textEl.innerText += hint.text.charAt(i); i++;
+                } else { clearInterval(typingTimer); }
             }, 120); 
         }
 
+        function getCanvasCenter() {
+            const container = document.getElementById('canvas-container');
+            return { x: container.clientWidth / 2, y: container.clientHeight / 2 };
+        }
+
         function updateOrbitUI() {
-            const centerX = window.innerWidth / 2;
-            const centerY = (window.innerHeight - 124) / 2 + 50; 
-            const radius = Math.min(window.innerWidth, window.innerHeight - 124) * 0.38;
+            const center = getCanvasCenter();
+            const radius = Math.min(window.innerWidth, window.innerHeight - 114) * 0.38;
             if (orbitPath) {
-                orbitPath.setAttribute("cx", centerX);
-                orbitPath.setAttribute("cy", centerY);
-                orbitPath.setAttribute("r", radius);
+                orbitPath.setAttribute("cx", center.x); orbitPath.setAttribute("cy", center.y); orbitPath.setAttribute("r", radius);
             }
         }
 
         function animate() {
-            const isAnyViewOpen = document.querySelector('.active-view') || document.querySelector('.modal.active');
+            const isAnyViewOpen = document.querySelector('.view-modal.active-view') || document.querySelector('.modal.active');
             if (isRotating && nodes.length > 0 && !isAnyViewOpen) {
-                rotationAngle += 0.0035;
-                render();
+                rotationAngle += 0.0035; render();
             }
             requestAnimationFrame(animate);
         }
 
         function distributeNodes() {
             if (nodes.length === 0) return;
-            nodes.forEach((node, index) => {
-                node.baseAngle = (index / nodes.length) * 2 * Math.PI;
-            });
+            nodes.forEach((node, index) => { node.baseAngle = (index / nodes.length) * 2 * Math.PI; });
             autoConnectLoop();
         }
 
@@ -400,8 +423,7 @@
             connections.forEach(c => typeMap[`${c.source}-${c.target}`] = c.type);
             const newConnections = [];
             for (let i = 0; i < nodes.length; i++) {
-                const source = nodes[i].id;
-                const target = nodes[(i + 1) % nodes.length].id;
+                const source = nodes[i].id; const target = nodes[(i + 1) % nodes.length].id;
                 newConnections.push({
                     id: `${source}-${target}`, source, target,
                     type: typeMap[`${source}-${target}`] || 'S'
@@ -410,27 +432,80 @@
             connections = newConnections;
         }
 
-        async function cloudSync() {
-            if (!gasUrl) { alert("SettingsからURLを設定してください"); return; }
-            const icon = document.getElementById('sync-icon');
-            const loader = document.getElementById('sync-loader');
-            icon.style.display = 'none'; loader.style.display = 'block';
+        /* ---------------- Cloud Actions ---------------- */
+        function openCloudManager() {
+            document.getElementById('cloud-view').classList.add('active-view');
+            fetchCloudList();
+        }
+        function closeCloudManager() { document.getElementById('cloud-view').classList.remove('active-view'); }
 
+        async function fetchCloudList() {
+            if (!gasUrl) { document.getElementById('cloud-list').innerHTML = "SettingsからURLを設定してください"; return; }
+            const listEl = document.getElementById('cloud-list');
+            listEl.innerHTML = '<div class="text-center py-10 text-slate-600 text-xs italic">Fetching list...</div>';
+            
             try {
-                await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ nodes, connections, solutions }) });
-                const getRes = await fetch(gasUrl);
-                const cloudData = await getRes.json();
-                if (cloudData.nodes) {
-                    nodes = cloudData.nodes; connections = cloudData.connections; solutions = cloudData.solutions;
-                    distributeNodes(); render(); syncLocal();
-                    alert("クラウド同期が完了しました。");
+                const res = await fetch(gasUrl);
+                const list = await res.json();
+                if (list.length === 0) {
+                    listEl.innerHTML = '<div class="text-center py-10 text-slate-600 text-xs italic">No projects found.</div>';
+                    return;
                 }
-            } catch (e) { alert("同期エラー：URLを確認してください。"); } finally { icon.style.display = 'block'; loader.style.display = 'none'; }
+                listEl.innerHTML = "";
+                list.reverse().forEach(item => {
+                    const date = new Date(item.timestamp).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const div = document.createElement('div');
+                    div.className = 'cloud-item';
+                    div.innerHTML = `
+                        <div class="flex flex-col">
+                            <span class="text-emerald-400 font-bold text-sm">${item.title}</span>
+                            <span class="text-[8px] text-slate-500 font-bold">${date}</span>
+                        </div>
+                        <button onclick='loadFromCloud(${JSON.stringify(item.data)}, "${item.title}")' class="px-4 py-2 bg-slate-800 text-emerald-400 rounded-lg text-[10px] font-black border border-emerald-500/20">LOAD</button>
+                    `;
+                    listEl.appendChild(div);
+                });
+            } catch (e) {
+                listEl.innerHTML = "通信エラーが発生しました。";
+            }
         }
 
+        async function saveToCloud() {
+            const title = document.getElementById('save-title').value.trim();
+            if (!title) { alert("タイトルを入力してください"); return; }
+            if (!gasUrl) { alert("URL未設定"); return; }
+            
+            const btn = document.querySelector('#cloud-view button[onclick="saveToCloud()"]');
+            btn.innerText = "SAVING..."; btn.disabled = true;
+
+            try {
+                const body = { title, data: { nodes, connections, solutions } };
+                // GASはCORS制限のためPOST時はmode: 'no-cors'が一般的だが、fetchの戻り値は不透明になる
+                await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(body) });
+                
+                setTimeout(() => {
+                    btn.innerText = "SAVE"; btn.disabled = false;
+                    fetchCloudList();
+                    alert(`「${title}」を保存しました。`);
+                }, 1500);
+            } catch (e) { alert("保存に失敗しました。"); btn.innerText = "SAVE"; btn.disabled = false; }
+        }
+
+        function loadFromCloud(data, title) {
+            if (!confirm(`「${title}」を読み込みますか？ 現在のループは破棄されます。`)) return;
+            nodes = data.nodes || [];
+            connections = data.connections || [];
+            solutions = data.solutions || {};
+            distributeNodes();
+            render();
+            syncLocal();
+            closeCloudManager();
+        }
+
+        /* ---------------- Common Logic ---------------- */
         function openSettings() { document.getElementById('settings-view').classList.add('active-view'); }
         function closeSettings() { document.getElementById('settings-view').classList.remove('active-view'); }
-        function saveSettings() { gasUrl = document.getElementById('gas-url').value; localStorage.setItem('gas_url', gasUrl); alert("保存しました"); closeSettings(); }
+        function saveSettings() { gasUrl = document.getElementById('gas-url').value; localStorage.setItem('gas_url', gasUrl); alert("設定を保存しました"); closeSettings(); }
 
         function openNodeModal(insertAt = -1) {
             pendingInsertIndex = insertAt;
@@ -439,11 +514,9 @@
         }
         function closeNodeModal() { document.getElementById('node-modal').classList.remove('active'); document.getElementById('node-input').value = ''; }
         function addNode() {
-            const label = document.getElementById('node-input').value;
-            if (!label) return;
+            const label = document.getElementById('node-input').value; if (!label) return;
             nodes.push({ id: Date.now(), label, baseAngle: Math.PI / 2 });
-            distributeNodes(); closeNodeModal(); render();
-            displayRandomHint();
+            distributeNodes(); closeNodeModal(); render(); displayRandomHint();
         }
 
         function toggleConnectMode() {
@@ -451,13 +524,13 @@
             const btn = document.getElementById('connect-btn');
             btn.className = isConnectMode ? "pointer-events-auto px-8 py-3 bg-amber-500 text-slate-950 rounded-xl font-black text-[10px] shadow-xl" : "pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px] shadow-xl backdrop-blur-md";
             btn.innerText = isConnectMode ? 'ターゲットを選択...' : '極性切替';
-            if (!isConnectMode) selectedNodeId = null;
+            if (!selectedNodeId) selectedNodeId = null;
             render();
         }
 
         function handleNodeClick(id) {
             if (isConnectMode) {
-                if (selectedNodeId === null) { selectedNodeId = id; document.getElementById('connect-btn').innerText = '次を選択'; }
+                if (selectedNodeId === null) { selectedNodeId = id; document.getElementById('connect-btn').innerText = 'ターゲットを選択'; }
                 else if (selectedNodeId !== id) { tempTargetId = id; document.getElementById('conn-modal').classList.add('active'); }
                 render();
             } else { openDetail(id); }
@@ -485,22 +558,19 @@
             const conn = connections.find(c => c.source === selectedNodeId && c.target === tempTargetId);
             if (conn) conn.type = type;
             document.getElementById('conn-modal').classList.remove('active');
-            toggleConnectMode(); render();
+            toggleConnectMode(); selectedNodeId = null; render();
         }
 
         function getRotatedPos(node, extraRadius = 0) {
-            const centerX = window.innerWidth / 2;
-            const centerY = (window.innerHeight - 124) / 2 + 50; 
-            const radius = Math.min(window.innerWidth, window.innerHeight - 124) * 0.38 + extraRadius;
+            const center = getCanvasCenter();
+            const radius = Math.min(window.innerWidth, window.innerHeight - 114) * 0.38 + extraRadius;
             const currentAngle = node.baseAngle + (isRotating ? rotationAngle : 0);
-            return { x: centerX + radius * Math.cos(currentAngle), y: centerY + radius * Math.sin(currentAngle), angle: currentAngle };
+            return { x: center.x + radius * Math.cos(currentAngle), y: center.y + radius * Math.sin(currentAngle), angle: currentAngle };
         }
 
         function render() {
             const currentIds = nodes.map(n => n.id.toString());
-            document.querySelectorAll('.node, .solution-cloud').forEach(el => {
-                if (!currentIds.includes(el.dataset.id)) el.remove();
-            });
+            document.querySelectorAll('.node, .solution-cloud').forEach(el => { if (!currentIds.includes(el.dataset.id)) el.remove(); });
             document.querySelectorAll('.add-between-btn').forEach(el => el.remove());
 
             nodes.forEach(node => {
@@ -508,32 +578,25 @@
                 let div = document.querySelector(`.node[data-id="${node.id}"]`);
                 if (!div) {
                     div = document.createElement('div'); div.className = 'node'; div.dataset.id = node.id;
-                    div.addEventListener('click', () => handleNodeClick(node.id));
-                    dynamicLayer.appendChild(div);
+                    div.addEventListener('click', () => handleNodeClick(node.id)); dynamicLayer.appendChild(div);
                 }
-                div.style.left = pos.x + 'px'; div.style.top = pos.y + 'px';
-                div.textContent = node.label;
-                div.classList.toggle('selected', selectedNodeId === node.id);
+                div.style.left = pos.x + 'px'; div.style.top = pos.y + 'px'; div.textContent = node.label; div.classList.toggle('selected', selectedNodeId === node.id);
 
                 if (solutions[node.id] && !isConnectMode) {
                     const cloudPos = getRotatedPos(node, 65);
                     let cloud = document.querySelector(`.solution-cloud[data-id="${node.id}"]`);
                     if (!cloud) {
                         cloud = document.createElement('div'); cloud.className = 'solution-cloud'; cloud.dataset.id = node.id;
-                        cloud.onclick = (e) => { e.stopPropagation(); openDetail(node.id); };
-                        dynamicLayer.appendChild(cloud);
+                        cloud.onclick = (e) => { e.stopPropagation(); openDetail(node.id); }; dynamicLayer.appendChild(cloud);
                     }
-                    cloud.style.left = cloudPos.x + 'px'; cloud.style.top = cloudPos.y + 'px';
-                    cloud.textContent = solutions[node.id];
+                    cloud.style.left = cloudPos.x + 'px'; cloud.style.top = cloudPos.y + 'px'; cloud.textContent = solutions[node.id];
                 } else {
-                    const cloud = document.querySelector(`.solution-cloud[data-id="${node.id}"]`);
-                    if (cloud) cloud.remove();
+                    const cloud = document.querySelector(`.solution-cloud[data-id="${node.id}"]`); if (cloud) cloud.remove();
                 }
             });
 
             while (svg.lastChild && svg.lastChild.nodeName !== 'defs' && svg.lastChild.id !== 'orbit-path') svg.removeChild(svg.lastChild);
-            const centerX = window.innerWidth / 2, centerY = (window.innerHeight - 124) / 2 + 50;
-            const radius = Math.min(window.innerWidth, window.innerHeight - 124) * 0.38;
+            const center = getCanvasCenter(); const radius = Math.min(window.innerWidth, window.innerHeight - 114) * 0.38;
 
             connections.forEach((conn, index) => {
                 const sNode = nodes.find(n => n.id === conn.source), tNode = nodes.find(n => n.id === conn.target);
@@ -543,13 +606,11 @@
                 const largeArc = diff > Math.PI ? 1 : 0;
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 path.setAttribute("d", `M ${s.x} ${s.y} A ${radius} ${radius} 0 ${largeArc} 1 ${t.x} ${t.y}`);
-                path.setAttribute("class", "flow-line");
-                path.setAttribute("stroke", conn.type === 'S' ? '#10b981' : '#f43f5e');
-                path.setAttribute("marker-end", conn.type === 'S' ? "url(#arrowhead)" : "url(#arrowhead-red)");
-                svg.appendChild(path);
+                path.setAttribute("class", "flow-line"); path.setAttribute("stroke", conn.type === 'S' ? '#10b981' : '#f43f5e');
+                path.setAttribute("marker-end", conn.type === 'S' ? "url(#arrowhead)" : "url(#arrowhead-red)"); svg.appendChild(path);
                 
                 const midAngle = s.angle + diff / 2;
-                const labelX = centerX + (radius + 28) * Math.cos(midAngle), labelY = centerY + (radius + 28) * Math.sin(midAngle);
+                const labelX = center.x + (radius + 28) * Math.cos(midAngle), labelY = center.y + (radius + 28) * Math.sin(midAngle);
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 text.setAttribute("x", labelX); text.setAttribute("y", labelY);
                 text.setAttribute("class", conn.type === 'S' ? 'label-s' : 'label-o');
@@ -558,10 +619,9 @@
 
                 if (!isConnectMode) {
                     const btn = document.createElement('div'); btn.className = 'add-between-btn'; btn.innerHTML = '＋';
-                    const btnX = centerX + radius * Math.cos(midAngle), btnY = centerY + radius * Math.sin(midAngle);
+                    const btnX = center.x + radius * Math.cos(midAngle), btnY = center.y + radius * Math.sin(midAngle);
                     btn.style.left = btnX + 'px'; btn.style.top = btnY + 'px';
-                    btn.onclick = (e) => { e.stopPropagation(); openNodeModal(index); };
-                    dynamicLayer.appendChild(btn);
+                    btn.onclick = (e) => { e.stopPropagation(); openNodeModal(index); }; dynamicLayer.appendChild(btn);
                 }
             });
 
@@ -579,8 +639,8 @@
             syncLocal();
         }
 
-        function syncLocal() { localStorage.setItem('system_loops_v15_4', JSON.stringify({nodes, connections, solutions})); }
-        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v15_4'); nodes=[]; connections=[]; solutions={}; render(); displayRandomHint(); } }
+        function syncLocal() { localStorage.setItem('system_loops_v16_0', JSON.stringify({nodes, connections, solutions})); }
+        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v16_0'); nodes=[]; connections=[]; solutions={}; render(); displayRandomHint(); } }
     </script>
 </body>
 </html>
