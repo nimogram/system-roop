@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>System Loop Creator - Strategic Cloud v13</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
+        #canvas-container { 
+            position: relative; 
+            width: 100vw; 
+            height: calc(100vh - 80px); 
+            overflow: hidden; 
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+        }
+        
+        .orbit-guide {
+            fill: none;
+            stroke: rgba(16, 185, 129, 0.08);
+            stroke-width: 2;
+        }
+
+        .node { 
+            position: absolute; 
+            padding: 10px 18px; 
+            background: rgba(15, 23, 42, 0.95); 
+            border: 2px solid #10b981; 
+            border-radius: 9999px; 
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); 
+            user-select: none;
+            z-index: 20;
+            min-width: 100px;
+            text-align: center;
+            font-weight: 700;
+            color: #fff;
+            backdrop-filter: blur(12px);
+            transform: translate(-50%, -50%);
+            font-size: 13px; 
+            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        top 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        /* 解決策の雲（Cloud） */
+        .solution-cloud {
+            position: absolute;
+            padding: 8px 14px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px dashed #34d399;
+            border-radius: 20px;
+            color: #a7f3d0;
+            font-size: 10px;
+            max-width: 120px;
+            text-align: center;
+            z-index: 15;
+            transform: translate(-50%, -50%);
+            backdrop-filter: blur(4px);
+            pointer-events: auto;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        top 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .add-between-btn {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            border-radius: 50%;
+            color: #10b981;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: bold;
+            z-index: 10;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
+        }
+
+        .node.selected { border-color: #f59e0b; box-shadow: 0 0 40px rgba(245, 158, 11, 0.6); }
+        
+        svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
+        .flow-line {
+            fill: none;
+            stroke-width: 3.5;
+            stroke-dasharray: 15, 8;
+            animation: flow 0.5s linear infinite;
+        }
+        .solution-line {
+            fill: none;
+            stroke: rgba(52, 211, 153, 0.4);
+            stroke-width: 1.5;
+            stroke-dasharray: 4, 2;
+        }
+        @keyframes flow {
+            from { stroke-dashoffset: 46; }
+            to { stroke-dashoffset: 0; }
+        }
+
+        .label-s { fill: #10b981; font-weight: 900; font-size: 16px; }
+        .label-o { fill: #f43f5e; font-weight: 900; font-size: 16px; }
+
+        /* Detail View */
+        #detail-view {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #020617;
+            z-index: 300;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        #detail-view.active { display: block; animation: slideUp 0.3s ease-out; }
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .modal { 
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
+            z-index: 400; align-items: center; justify-content: center; backdrop-filter: blur(20px);
+        }
+        .modal.active { display: flex; }
+        
+        .fab-add {
+            position: fixed;
+            bottom: 32px;
+            right: 24px;
+            width: 68px;
+            height: 68px;
+            background: #10b981;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 900;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            border: 3px solid rgba(255,255,255,0.2);
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="p-4 bg-slate-900/90 border-b border-emerald-500/20 flex justify-between items-center backdrop-blur-xl">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                <svg class="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <div class="flex flex-col">
+                <h1 class="text-md font-black text-white tracking-tighter italic text-emerald-400">Tactical Loop</h1>
+                <span class="text-[8px] text-slate-500 font-black uppercase tracking-[0.3em]">v13.0 Strategic Cloud</span>
+            </div>
+        </div>
+        <button onclick="clearCanvas()" class="px-4 py-1.5 text-[10px] bg-red-900/20 text-red-400 border border-red-500/30 rounded-full font-bold">RESET ALL</button>
+    </header>
+
+    <div id="canvas-container">
+        <div id="dynamic-layer" class="w-full h-full relative">
+            <svg id="svg-layer">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#10b981" />
+                    </marker>
+                    <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#f43f5e" />
+                    </marker>
+                    <marker id="arrowhead-cloud" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                        <polygon points="0 0, 8 3, 0 6" fill="rgba(52, 211, 153, 0.4)" />
+                    </marker>
+                </defs>
+                <circle id="orbit-path" class="orbit-guide"></circle>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Detail View Overlay -->
+    <div id="detail-view">
+        <div class="max-w-md mx-auto h-full flex flex-col pb-10">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="closeDetail()" class="text-slate-400 font-bold p-2">← Back</button>
+                <div class="px-3 py-1 bg-emerald-950 text-emerald-400 text-[10px] font-black rounded-full border border-emerald-500/30 tracking-widest uppercase">Deep Dive</div>
+            </div>
+
+            <div class="mb-8 text-center">
+                <div id="detail-node-label" class="inline-block px-6 py-3 bg-slate-900 border border-emerald-500 rounded-2xl text-xl font-bold text-white shadow-lg">
+                    -
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col bg-slate-900/80 rounded-3xl border border-slate-800 p-6 mb-6">
+                <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-3">Solution Idea</label>
+                <textarea id="solution-input" class="flex-1 w-full bg-transparent text-white text-md outline-none resize-none leading-relaxed" placeholder="この課題を解決するためのアイデアを入力..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3">
+                <button onclick="saveSolution()" class="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg">UPDATE LOOP</button>
+                <button onclick="deleteCurrentNode()" class="w-full py-4 bg-red-900/20 text-red-500 border border-red-500/30 rounded-2xl font-bold text-xs">DELETE THIS VARIABLE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right-Bottom Add Button -->
+    <button id="main-fab" onclick="openNodeModal()" class="fab-add">＋</button>
+
+    <!-- Bottom Utils -->
+    <div id="bottom-nav" class="fixed bottom-0 left-0 w-full p-6 pr-24 flex items-center pointer-events-none">
+        <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-6 py-3 bg-slate-800/95 text-slate-300 border border-slate-700 rounded-xl font-black text-xs shadow-2xl backdrop-blur-md">
+            極性切替
+        </button>
+    </div>
+
+    <!-- Modals -->
+    <div id="node-modal" class="modal p-6">
+        <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm">
+            <h2 class="text-xl font-black mb-1 text-white text-center uppercase tracking-tighter italic">Add Element</h2>
+            <p id="modal-desc" class="text-[9px] text-emerald-500 font-bold text-center mb-6 uppercase tracking-widest">Variable Entry</p>
+            <input type="text" id="node-input" class="w-full p-5 bg-slate-800/50 border border-slate-700 text-white rounded-xl mb-8 focus:border-emerald-500 outline-none font-bold text-center text-xl" placeholder="..." autofocus>
+            <div class="flex gap-4">
+                <button onclick="closeNodeModal()" class="flex-1 py-4 text-slate-500 font-bold">CANCEL</button>
+                <button onclick="addNode()" class="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black">ENGAGE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="conn-modal" class="modal p-6">
+        <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm text-center">
+            <h2 class="text-lg font-black mb-6 text-white uppercase italic text-left">因果の極性</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="completeConnection('S')" class="p-6 bg-emerald-950/30 border border-emerald-500/20 rounded-2xl transition-all">
+                    <div class="text-5xl font-black text-emerald-500 mb-1">S</div>
+                    <div class="text-[8px] text-emerald-400 font-bold uppercase tracking-widest tracking-widest">Same (+)</div>
+                </button>
+                <button onclick="completeConnection('O')" class="p-6 bg-red-950/30 border border-red-500/20 rounded-2xl transition-all">
+                    <div class="text-5xl font-black text-red-500 mb-1">O</div>
+                    <div class="text-[8px] text-red-400 font-bold uppercase tracking-widest">Opposite (-)</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nodes = [];
+        let connections = [];
+        let solutions = {};
+        let isConnectMode = false;
+        let selectedNodeId = null;
+        let isRotating = true;
+        let rotationAngle = 0;
+        let pendingInsertIndex = -1;
+        let currentDetailNodeId = null;
+
+        const dynamicLayer = document.getElementById('dynamic-layer');
+        const svg = document.getElementById('svg-layer');
+        const orbitPath = document.getElementById('orbit-path');
+
+        const STORAGE_KEY = 'system_loops_v13';
+
+        window.onload = () => {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const data = JSON.parse(saved);
+                nodes = data.nodes || [];
+                connections = data.connections || [];
+                solutions = data.solutions || {};
+            }
+            updateOrbitUI();
+            distributeNodes();
+            render();
+            requestAnimationFrame(animate);
+        };
+
+        window.onresize = updateOrbitUI;
+
+        function updateOrbitUI() {
+            const centerX = window.innerWidth / 2;
+            const centerY = (window.innerHeight - 80) / 2;
+            const radius = Math.min(window.innerWidth, window.innerHeight - 80) * 0.38;
+            orbitPath.setAttribute("cx", centerX);
+            orbitPath.setAttribute("cy", centerY);
+            orbitPath.setAttribute("r", radius);
+        }
+
+        function animate() {
+            if (isRotating && nodes.length > 0 && !document.getElementById('detail-view').classList.contains('active')) {
+                rotationAngle += 0.0035;
+                render();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function distributeNodes() {
+            if (nodes.length === 0) return;
+            nodes.forEach((node, index) => {
+                node.baseAngle = (index / nodes.length) * 2 * Math.PI;
+            });
+            autoConnectLoop();
+        }
+
+        function autoConnectLoop() {
+            if (nodes.length < 2) { connections = []; return; }
+            const typeMap = {};
+            connections.forEach(c => typeMap[`${c.source}-${c.target}`] = c.type);
+            const newConnections = [];
+            for (let i = 0; i < nodes.length; i++) {
+                const source = nodes[i].id;
+                const target = nodes[(i + 1) % nodes.length].id;
+                newConnections.push({
+                    id: `${source}-${target}`, source, target,
+                    type: typeMap[`${source}-${target}`] || 'S'
+                });
+            }
+            connections = newConnections;
+        }
+
+        function openNodeModal(insertAt = -1) {
+            pendingInsertIndex = insertAt;
+            document.getElementById('modal-desc').innerText = insertAt === -1 ? "Variable Entry" : "Context Insert";
+            document.getElementById('node-modal').classList.add('active');
+            setTimeout(() => document.getElementById('node-input').focus(), 100);
+        }
+
+        function closeNodeModal() {
+            document.getElementById('node-modal').classList.remove('active');
+            document.getElementById('node-input').value = '';
+            pendingInsertIndex = -1;
+        }
+
+        function addNode() {
+            const label = document.getElementById('node-input').value;
+            if (!label) return;
+            const newNode = { id: Date.now(), label, baseAngle: Math.PI / 2 };
+            if (pendingInsertIndex === -1) nodes.push(newNode);
+            else nodes.splice(pendingInsertIndex + 1, 0, newNode);
+            distributeNodes();
+            closeNodeModal();
+            render();
+        }
+
+        function toggleConnectMode() {
+            isConnectMode = !isConnectMode;
+            const btn = document.getElementById('connect-btn');
+            btn.className = isConnectMode ? 
+                "pointer-events-auto px-6 py-3 bg-amber-500 text-slate-950 rounded-xl font-black text-xs shadow-xl" :
+                "pointer-events-auto px-6 py-3 bg-slate-800/95 text-slate-300 border border-slate-700 rounded-xl font-black text-xs shadow-xl backdrop-blur-md";
+            btn.innerText = isConnectMode ? 'ターゲット選択中...' : '極性切替';
+            if (!isConnectMode) selectedNodeId = null;
+            render();
+        }
+
+        function handleNodeClick(id) {
+            if (isConnectMode) {
+                if (selectedNodeId === null) {
+                    selectedNodeId = id;
+                    document.getElementById('connect-btn').innerText = '次の要素を選択';
+                } else if (selectedNodeId !== id) {
+                    tempTargetId = id;
+                    document.getElementById('conn-modal').classList.add('active');
+                }
+                render();
+            } else {
+                openDetail(id);
+            }
+        }
+
+        function openDetail(id) {
+            const node = nodes.find(n => n.id === id);
+            if (!node) return;
+            currentDetailNodeId = id;
+            document.getElementById('detail-node-label').innerText = node.label;
+            document.getElementById('solution-input').value = solutions[id] || "";
+            document.getElementById('detail-view').classList.add('active');
+            document.getElementById('canvas-container').style.opacity = "0";
+            document.getElementById('main-fab').style.display = "none";
+        }
+
+        function closeDetail() {
+            document.getElementById('detail-view').classList.remove('active');
+            document.getElementById('canvas-container').style.opacity = "1";
+            document.getElementById('main-fab').style.display = "flex";
+            currentDetailNodeId = null;
+            render();
+        }
+
+        function saveSolution() {
+            if (currentDetailNodeId) {
+                solutions[currentDetailNodeId] = document.getElementById('solution-input').value;
+                syncStorage();
+                closeDetail();
+            }
+        }
+
+        function deleteCurrentNode() {
+            if (confirm("この要素と解決案を削除しますか？")) {
+                nodes = nodes.filter(n => n.id !== currentDetailNodeId);
+                connections = connections.filter(c => c.source !== currentDetailNodeId && c.target !== currentDetailNodeId);
+                delete solutions[currentDetailNodeId];
+                distributeNodes();
+                syncStorage();
+                closeDetail();
+            }
+        }
+
+        let tempTargetId = null;
+        function completeConnection(type) {
+            const conn = connections.find(c => c.source === selectedNodeId && c.target === tempTargetId);
+            if (conn) conn.type = type;
+            document.getElementById('conn-modal').classList.remove('active');
+            toggleConnectMode();
+            render();
+        }
+
+        function getRotatedPos(node, extraRadius = 0) {
+            const centerX = window.innerWidth / 2;
+            const centerY = (window.innerHeight - 80) / 2;
+            const radius = Math.min(window.innerWidth, window.innerHeight - 80) * 0.38 + extraRadius;
+            const currentAngle = node.baseAngle + (isRotating ? rotationAngle : 0);
+            return {
+                x: centerX + radius * Math.cos(currentAngle),
+                y: centerY + radius * Math.sin(currentAngle),
+                angle: currentAngle
+            };
+        }
+
+        function render() {
+            const currentIds = nodes.map(n => n.id.toString());
+            // DOM Cleanup
+            document.querySelectorAll('.node, .add-between-btn, .solution-cloud').forEach(el => {
+                if (el.classList.contains('node') && !currentIds.includes(el.dataset.id)) el.remove();
+                if (!el.classList.contains('node')) el.remove();
+            });
+
+            const nodeData = nodes.map(node => ({
+                id: node.id,
+                label: node.label,
+                pos: getRotatedPos(node),
+                solution: solutions[node.id] || ""
+            }));
+
+            // Draw Nodes & Clouds
+            nodeData.forEach(data => {
+                let div = document.querySelector(`.node[data-id="${data.id}"]`);
+                if (!div) {
+                    div = document.createElement('div');
+                    div.className = 'node';
+                    div.dataset.id = data.id;
+                    div.addEventListener('click', () => handleNodeClick(data.id));
+                    dynamicLayer.appendChild(div);
+                }
+                div.style.left = data.pos.x + 'px';
+                div.style.top = data.pos.y + 'px';
+                div.textContent = data.label;
+                div.classList.toggle('selected', selectedNodeId === data.id);
+
+                // Solution Cloud
+                if (data.solution && !isConnectMode) {
+                    const cloudPos = getRotatedPos(nodes.find(n => n.id === data.id), 65);
+                    const cloud = document.createElement('div');
+                    cloud.className = 'solution-cloud';
+                    cloud.style.left = cloudPos.x + 'px';
+                    cloud.style.top = cloudPos.y + 'px';
+                    cloud.textContent = data.solution;
+                    cloud.onclick = () => openDetail(data.id);
+                    dynamicLayer.appendChild(cloud);
+                }
+            });
+
+            while (svg.lastChild && svg.lastChild.nodeName !== 'defs' && svg.lastChild.id !== 'orbit-path') {
+                svg.removeChild(svg.lastChild);
+            }
+
+            const centerX = window.innerWidth / 2;
+            const centerY = (window.innerHeight - 80) / 2;
+            const radius = Math.min(window.innerWidth, window.innerHeight - 80) * 0.38;
+
+            // Connections & Bridge Buttons
+            connections.forEach((conn, index) => {
+                const sData = nodeData.find(d => d.id === conn.source);
+                const tData = nodeData.find(d => d.id === conn.target);
+                if (!sData || !tData) return;
+                const s = sData.pos;
+                const t = tData.pos;
+                let diff = (t.angle - s.angle) % (2 * Math.PI);
+                if (diff < 0) diff += 2 * Math.PI;
+                const largeArc = diff > Math.PI ? 1 : 0;
+                
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", `M ${s.x} ${s.y} A ${radius} ${radius} 0 ${largeArc} 1 ${t.x} ${t.y}`);
+                path.setAttribute("class", "flow-line");
+                path.setAttribute("stroke", conn.type === 'S' ? '#10b981' : '#f43f5e');
+                path.setAttribute("marker-end", conn.type === 'S' ? "url(#arrowhead)" : "url(#arrowhead-red)");
+                svg.appendChild(path);
+
+                const midAngle = s.angle + diff / 2;
+                const labelX = centerX + (radius + 28) * Math.cos(midAngle);
+                const labelY = centerY + (radius + 28) * Math.sin(midAngle);
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", labelX); text.setAttribute("y", labelY);
+                text.setAttribute("class", conn.type === 'S' ? 'label-s' : 'label-o');
+                text.setAttribute("text-anchor", "middle"); text.setAttribute("dominant-baseline", "middle");
+                text.textContent = conn.type;
+                svg.appendChild(text);
+
+                if (!isConnectMode) {
+                    const btn = document.createElement('div');
+                    btn.className = 'add-between-btn'; btn.innerHTML = '＋';
+                    const btnX = centerX + radius * Math.cos(midAngle);
+                    const btnY = centerY + radius * Math.sin(midAngle);
+                    btn.style.left = btnX + 'px'; btn.style.top = btnY + 'px';
+                    btn.onclick = (e) => { e.stopPropagation(); openNodeModal(index); };
+                    dynamicLayer.appendChild(btn);
+                }
+            });
+
+            // Cloud Lines (Node to Cloud)
+            if (!isConnectMode) {
+                nodeData.forEach(data => {
+                    if (data.solution) {
+                        const cloudPos = getRotatedPos(nodes.find(n => n.id === data.id), 65);
+                        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        line.setAttribute("x1", data.pos.x); line.setAttribute("y1", data.pos.y);
+                        line.setAttribute("x2", cloudPos.x); line.setAttribute("y2", cloudPos.y);
+                        line.setAttribute("class", "solution-line");
+                        line.setAttribute("marker-end", "url(#arrowhead-cloud)");
+                        svg.appendChild(line);
+                    }
+                });
+            }
+            syncStorage();
+        }
+
+        function syncStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({nodes, connections, solutions}));
+        }
+
+        function clearCanvas() {
+            if(confirm("全ての因果ループと解決案をリセットしますか？")) {
+                localStorage.removeItem(STORAGE_KEY);
+                nodes = []; connections = []; solutions = {};
+                document.querySelectorAll('.node, .add-between-btn, .solution-cloud').forEach(el => el.remove());
+                render();
+            }
+        }
+    </script>
+</body>
+</html>
