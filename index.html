@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Loop Creator - Clean Core v16.3</title>
+    <title>System Loop Creator - Auto-Harmonize v17.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
@@ -35,105 +35,59 @@
             position: relative;
         }
         #hint-text {
-            font-size: 13px;
-            font-weight: 700;
-            color: #fde047; /* Signal Yellow */
-            line-height: 1.5;
-            text-align: center;
-            letter-spacing: 0.05em;
-            text-shadow: 0 0 12px rgba(253, 224, 71, 0.25);
-            min-height: 1.5em;
+            font-size: 13px; font-weight: 700; color: #fde047; line-height: 1.5; text-align: center; letter-spacing: 0.05em; text-shadow: 0 0 12px rgba(253, 224, 71, 0.25); min-height: 1.5em;
         }
-
-        .orbit-guide { fill: none; stroke: rgba(16, 185, 129, 0.06); stroke-width: 2; }
 
         .node { 
-            position: absolute; 
-            padding: 10px 18px; 
-            background: rgba(15, 23, 42, 0.95); 
-            border: 2px solid #10b981; 
-            border-radius: 9999px; 
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); 
-            user-select: none;
-            z-index: 30;
-            min-width: 100px;
-            text-align: center;
-            font-weight: 700;
-            color: #fff;
-            backdrop-filter: blur(12px);
-            transform: translate(-50%, -50%);
-            font-size: 12px; 
-            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), 
-                        top 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
-                        transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
+            position: absolute; padding: 10px 18px; background: rgba(15, 23, 42, 0.95); border: 2px solid #10b981; border-radius: 9999px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); 
+            user-select: none; z-index: 30; min-width: 100px; text-align: center; font-weight: 700; color: #fff; backdrop-filter: blur(12px); transform: translate(-50%, -50%); font-size: 12px; cursor: grab;
+            /* ドラッグ後の自動整列時に滑らかに動かすためのトランジション */
+            transition: left 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1);
         }
+        .node:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.1); transition: none; }
+        .node.dragging { border-color: #fde047; box-shadow: 0 0 30px rgba(253, 224, 71, 0.3); transition: none; }
 
         .solution-cloud {
-            position: absolute; padding: 8px 14px;
-            background: rgba(16, 185, 129, 0.15); border: 1px dashed #34d399; border-radius: 20px;
-            color: #a7f3d0; font-size: 10px; max-width: 120px; text-align: center;
-            z-index: 25; transform: translate(-50%, -50%); backdrop-filter: blur(4px);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            animation: floatCloud 6s ease-in-out infinite;
-            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-            cursor: pointer;
+            position: absolute; padding: 8px 14px; background: rgba(253, 224, 71, 0.05); border: 1px dashed #fde047; border-radius: 20px; color: #fef08a; font-size: 10px; max-width: 120px; text-align: center;
+            z-index: 25; transform: translate(-50%, -50%); backdrop-filter: blur(4px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: floatCloud 6s ease-in-out infinite; cursor: pointer;
+            transition: left 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1);
         }
-
         @keyframes floatCloud { 0%, 100% { margin-top: -2px; } 50% { margin-top: 2px; } }
         
-        .add-between-btn {
-            position: absolute; width: 24px; height: 24px;
-            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.5);
-            border-radius: 50%; color: #10b981; display: flex; align-items: center; justify-content: center;
-            font-size: 16px; font-weight: bold; z-index: 20; transform: translate(-50%, -50%);
-            cursor: pointer;
-        }
-
         svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .flow-line { fill: none; stroke-width: 3; stroke-dasharray: 12, 6; animation: flow 0.6s linear infinite; }
-        .solution-line { fill: none; stroke: rgba(52, 211, 153, 0.3); stroke-width: 1; stroke-dasharray: 4, 2; }
+        .solution-line { fill: none; stroke: #fde047; stroke-width: 1.5; stroke-dasharray: 3, 3; opacity: 0.6; }
         @keyframes flow { from { stroke-dashoffset: 36; } to { stroke-dashoffset: 0; } }
 
-        .label-s { fill: #10b981; font-weight: 900; font-size: 14px; opacity: 0.8; }
-        .label-o { fill: #f43f5e; font-weight: 900; font-size: 14px; opacity: 0.8; }
+        .label-s { fill: #10b981; font-weight: 900; font-size: 14px; }
+        .label-o { fill: #f43f5e; font-weight: 900; font-size: 14px; }
 
-        .view-modal {
-            display: none; position: fixed; inset: 0; background: #020617; z-index: 300; padding: 24px; overflow-y: auto;
-        }
-        .active-view { display: block !important; animation: slideIn 0.3s cubic-bezier(0.23, 1, 0.32, 1); }
+        .view-modal { display: none; position: fixed; inset: 0; background: #020617; z-index: 300; padding: 24px; overflow-y: auto; }
+        .active-view { display: block !important; animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 400; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 400; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .modal.active { display: flex; }
         
         .fab {
-            position: fixed; bottom: 32px; width: 64px; height: 64px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5); z-index: 100; transition: all 0.2s;
-            border: 2px solid rgba(255,255,255,0.1); cursor: pointer;
+            position: fixed; bottom: 32px; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 30px rgba(0,0,0,0.5); z-index: 100; transition: all 0.2s; border: 2px solid rgba(255,255,255,0.1); cursor: pointer;
         }
-
         .fab-add { right: 24px; background: #10b981; color: white; font-size: 32px; font-weight: 900; }
         .fab-settings { left: 24px; background: #1e293b; color: #94a3b8; font-size: 24px; }
-        .fab:active { transform: scale(0.9); }
 
         .header-btn {
-            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 12px; padding: 6px 14px; font-size: 11px; font-weight: 900; color: #10b981;
-            display: flex; align-items: center; gap: 8px; transition: all 0.2s; cursor: pointer;
+            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 6px 14px; font-size: 11px; font-weight: 900; color: #10b981; display: flex; align-items: center; gap: 8px; cursor: pointer;
         }
-        .header-btn:active { background: #10b981; color: #020617; }
 
-        .cloud-item {
-            background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(16, 185, 129, 0.2);
-            padding: 16px; border-radius: 16px; margin-bottom: 12px;
-            display: flex; justify-content: space-between; align-items: center;
-            transition: all 0.2s;
+        #toast-container {
+            position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 500; pointer-events: none;
         }
-        .cloud-item:hover { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
-        
+        .toast {
+            background: #10b981; color: #020617; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 13px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin-bottom: 10px; animation: toastIn 0.3s ease-out;
+        }
+        @keyframes toastIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .cloud-item { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; border-radius: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .loader { width: 12px; height: 12px; border: 2px solid #10b981; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -147,22 +101,25 @@
             </div>
             <div class="flex flex-col">
                 <h1 class="text-xs font-black text-white tracking-tighter italic text-emerald-400 leading-none">Cloud Orchestrator</h1>
-                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v16.3 clean core</span>
+                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v17.1 auto-harmonize</span>
             </div>
         </div>
         
-        <div class="flex items-center gap-3">
-            <button onclick="openCloudManager()" class="header-btn">
-                <span id="sync-icon">☁️ SYNC</span>
-                <div id="sync-loader" class="loader"></div>
+        <div class="flex items-center gap-2">
+            <button onclick="alignOrbit(true)" class="header-btn text-amber-400 border-amber-500/30">🎯 ALIGN</button>
+            <button onclick="toggleRotation()" id="rotation-toggle" class="header-btn">
+                <span id="rotate-icon">⏸ STOP</span>
             </button>
-            <button onclick="clearCanvas()" class="px-3 py-1.5 text-[8px] bg-red-900/10 text-red-500 border border-red-500/20 rounded-full font-bold">RESET</button>
+            <button onclick="openCloudManager()" class="header-btn">☁️ SYNC</button>
+            <button onclick="clearCanvas()" class="px-2 py-1.5 text-[8px] bg-red-900/10 text-red-500 border border-red-500/20 rounded-full font-bold">RESET</button>
         </div>
     </header>
 
     <div id="hint-banner">
         <span id="hint-text"></span>
     </div>
+
+    <div id="toast-container"></div>
 
     <div id="canvas-container">
         <div id="dynamic-layer" class="w-full h-full relative">
@@ -171,46 +128,36 @@
                     <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#10b981"/></marker>
                     <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#f43f5e"/></marker>
                 </defs>
-                <circle id="orbit-path" class="orbit-guide"></circle>
             </svg>
         </div>
     </div>
 
     <div id="cloud-view" class="view-modal">
         <div class="max-w-md mx-auto">
-            <button onclick="closeCloudManager()" class="text-slate-400 font-bold mb-8 flex items-center gap-2">← Back to Loop</button>
+            <button onclick="closeCloudManager()" class="text-slate-400 font-bold mb-8 flex items-center gap-2">← Back</button>
             <h2 class="text-2xl font-black mb-8 text-emerald-400 italic">Cloud Manager</h2>
-            
             <div class="mb-10 bg-slate-900/50 p-6 rounded-2xl border border-emerald-500/20">
-                <label class="text-[10px] text-slate-500 font-black uppercase mb-3 block tracking-widest">New Save / Overwrite Title</label>
+                <!-- Mobile Optimized Save Section -->
                 <div class="flex flex-col gap-3">
-                    <input type="text" id="save-title" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-bold" placeholder="プロジェクト名を入力...">
-                    <button onclick="saveToCloud()" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-xs shadow-lg shadow-emerald-900/40">SAVE PROJECT</button>
+                    <input type="text" id="save-title" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-bold" placeholder="プロジェクト名...">
+                    <button onclick="saveToCloud()" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-xs">SAVE PROJECT</button>
                 </div>
             </div>
-
-            <h3 class="text-[10px] text-slate-500 font-black uppercase mb-4 tracking-widest">Stored Projects</h3>
-            <div id="cloud-list" class="space-y-3">
-                <div class="text-center py-10 text-slate-600 text-xs italic">Loading projects...</div>
-            </div>
+            <div id="cloud-list" class="space-y-3"></div>
         </div>
     </div>
 
-    <button onclick="openSettings()" class="fab fab-settings" aria-label="Settings">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-    </button>
+    <button onclick="openSettings()" class="fab fab-settings"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg></button>
     <button onclick="openNodeModal()" class="fab fab-add">＋</button>
 
     <div id="detail-view" class="view-modal">
-        <div class="max-w-md mx-auto h-full flex flex-col pb-10">
+        <div class="max-w-md mx-auto h-full flex flex-col">
             <button onclick="closeDetail()" class="text-slate-400 font-bold mb-6">← Back</button>
-            <div id="detail-node-label" class="text-2xl font-black text-emerald-400 mb-8 border-l-4 border-emerald-500 pl-4">Variable Name</div>
-            <div class="flex-1 bg-slate-900/50 rounded-3xl border border-slate-800 p-6 mb-8 shadow-inner">
-                <textarea id="solution-input" class="w-full h-full bg-transparent text-white outline-none resize-none leading-relaxed text-sm font-medium" placeholder="アクションプランを入力..."></textarea>
-            </div>
-            <div class="flex flex-col gap-4">
-                <button onclick="saveSolution()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black shadow-lg">SAVE DATA</button>
-                <button onclick="deleteCurrentNode()" class="w-full py-4 text-xs text-red-500 font-bold bg-red-950/10 border border-red-900/20 rounded-2xl uppercase tracking-widest">Delete Element</button>
+            <div id="detail-node-label" class="text-2xl font-black text-emerald-400 mb-8 border-l-4 border-emerald-500 pl-4">Variable</div>
+            <textarea id="solution-input" class="flex-1 bg-slate-900/50 rounded-3xl border border-slate-800 p-6 mb-8 text-white outline-none resize-none" placeholder="アクションプラン..."></textarea>
+            <div class="flex flex-col gap-4 mb-10">
+                <button onclick="saveSolution()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black">SAVE DATA</button>
+                <button onclick="deleteCurrentNode()" class="w-full py-4 text-xs text-red-500 font-bold uppercase">Delete</button>
             </div>
         </div>
     </div>
@@ -219,119 +166,27 @@
         <div class="max-w-md mx-auto">
             <button onclick="closeSettings()" class="text-slate-400 font-bold mb-10">← Back</button>
             <h2 class="text-2xl font-black mb-8 text-emerald-400 italic">Configuration</h2>
-            <div class="space-y-6">
-                <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-                    <label class="text-[10px] text-slate-500 font-black uppercase mb-3 block">GAS Web App URL</label>
-                    <input type="text" id="gas-url-input" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-mono text-xs" placeholder="https://script.google.com/macros/s/.../exec">
-                </div>
-                <button onclick="saveSettings()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black">APPLY & SAVE</button>
+            <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 mb-6">
+                <input type="text" id="gas-url-input" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-mono text-xs">
             </div>
+            <button onclick="saveSettings()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black">APPLY</button>
         </div>
     </div>
 
     <div id="bottom-nav" class="fixed bottom-0 left-0 w-full p-10 px-24 flex items-center justify-center pointer-events-none">
-        <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px] shadow-2xl backdrop-blur-md">極性切替</button>
+        <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px]">極性切替</button>
     </div>
 
-    <div id="node-modal" class="modal p-6">
-        <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl">
-            <h2 class="text-lg font-black mb-1 text-white text-center italic text-emerald-400">Feed Data</h2>
-            <input type="text" id="node-input" class="w-full p-4 bg-slate-800/50 border border-slate-700 text-white rounded-xl mb-6 focus:border-emerald-500 outline-none font-bold text-center text-lg shadow-inner" placeholder="...">
-            <div class="flex gap-3">
-                <button onclick="closeNodeModal()" class="flex-1 py-4 text-slate-500 font-bold text-xs">CANCEL</button>
-                <button onclick="addNode()" class="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black uppercase shadow-lg shadow-emerald-900/20">Engage</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="conn-modal" class="modal p-6">
-        <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm text-center shadow-2xl">
-            <h2 class="text-md font-black mb-6 text-white uppercase italic text-emerald-400">因果の極性</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="completeConnection('S')" class="p-6 bg-emerald-950/20 border border-emerald-500/20 rounded-2xl">
-                    <div class="text-4xl font-black text-emerald-500 mb-1">S</div>
-                    <div class="text-[8px] text-emerald-400 font-bold uppercase tracking-widest">Reinforce</div>
-                </button>
-                <button onclick="completeConnection('O')" class="p-6 bg-red-950/20 border border-red-500/20 rounded-2xl">
-                    <div class="text-4xl font-black text-red-500 mb-2">O</div>
-                    <div class="text-[8px] text-red-400 font-bold uppercase tracking-widest">Balance</div>
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Modals -->
+    <div id="node-modal" class="modal p-6"><div class="bg-slate-900 p-8 rounded-[2.5rem] w-full max-w-sm"><h2 class="text-emerald-400 font-black mb-6">New Element</h2><input type="text" id="node-input" class="w-full p-4 bg-slate-800 border border-slate-700 text-white rounded-xl mb-6 text-center" placeholder="..."><div class="flex gap-3"><button onclick="closeNodeModal()" class="flex-1 py-4 text-slate-500 font-bold">CANCEL</button><button onclick="addNode()" class="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black">ADD</button></div></div></div>
+    <div id="conn-modal" class="modal p-6"><div class="bg-slate-900 p-8 rounded-[2.5rem] w-full max-w-sm text-center"><h2 class="text-emerald-400 font-black mb-6 italic">Polarity</h2><div class="grid grid-cols-2 gap-4"><button onclick="completeConnection('S')" class="p-6 bg-emerald-950/20 border border-emerald-500/20 rounded-2xl"><div class="text-4xl font-black text-emerald-500">S</div></button><button onclick="completeConnection('O')" class="p-6 bg-red-950/20 border border-red-500/20 rounded-2xl"><div class="text-4xl font-black text-red-500">O</div></button></div></div></div>
 
     <script>
         const hintsList = [
             { text: "「同じ問題が形を変えて何度も起きる」時、そこには必ず隠れたループがある。" },
             { text: "犯人（人）を探すのをやめ、行動を強制している「構造（ループ）」を探す。" },
-            { text: "目の前の「火消し」が、将来の「大火事」の燃料になっていないか自問する。" },
-            { text: "成功している時こそ、自分を慢心させる「自己強化ループ」の副作用を警戒する。" },
-            { text: "「良かれと思ってやったこと」が裏目に出る時、負のフィードバックを探す。" },
-            { text: "相手との沈黙や反発は、互いの「メンタルモデル」が衝突しているループの出口。" },
-            { text: "組織の「忖度」は、情報の質を下げ、判断を誤らせる典型的な悪循環である。" },
-            { text: "「言っても無駄だ」という学習性無力感のループを、小さな成功体験で断ち切る。" },
-            { text: "批判のループを止めるには、まず自分が「理解しました」とパケットを受け取る。" },
-            { text: "信頼が欠如するとマイクロマネジメントが増え、さらに信頼が減るループを自覚する。" },
-            { text: "ループから脱却するには、要素を増やすのではなく「不要な繋がり」を断つ。" },
-            { text: "ボトルネック（制約）を無視して他の部分を強化すると、システムは必ず歪む。" },
-            { text: "介入の結果が出るまでには必ず「遅れ」がある。焦って追加投入しない。" },
-            { text: "ループの図解（システム原型）を書き出し、客観的な「外の視点」を持つ。" },
-            { text: "数値化（測定）することで、主観では見えない「波の周期」を可視化する。" },
-            { text: "レバレッジポイント（最小の力で最大の変化が出る点）は、常に直感に反する場所にある。" },
-            { text: "短期的な問題解決（応急処置）と、長期的な根本解決（根本治療）を明確に分ける。" },
-            { text: "外部の力を借りてループに「新しい風（入力）」を入れ、閉鎖的な循環を壊す。" },
-            { text: "「サンクコスト（過去の投資）」に縛られるループは、勇気を持って損切りする。" },
-            { text: "システム全体が目指すべき「真の目的（North Star）」を再定義し、ベクトルを揃える。" },
-            { text: "「なぜかいつもこうなる」という違和感は、潜在的なループの検知アラートである。" },
-            { text: "犯人探しを「構造の不備探し」に置換し、感情的なサンクコストをカットする。" },
-            { text: "短期的な「快楽」が長期的な「苦痛」を生む構造（依存のループ）を直視する。" },
-            { text: "変化を拒む抵抗勢力は、システムの「安全装置（ホメオスタシス）」だと解釈する。" },
-            { text: "「頑張れば解決する」という精神論が、実は根本解決を遅らせる最大のループ。" },
-            { text: "成功している時ほど、次の「衰退ループ」の種が蒔かれていると謙虚に構える。" },
-            { text: "自分の「正しさ」への執着が、相手の「反発」を生む双方向ループを自覚する。" },
-            { text: "「いつかやる」という思考停止ループを、「今、5分だけやる」で強制終了する。" },
-            { text: "失敗を「データ不足」と捉え、学習ループの入力（インプット）に変換する。" },
-            { text: "完璧主義という「終わりのないループ」を、「完了主義」で上書きする。" },
-            { text: "会話のドッジボールが続くなら、一旦ボールを持ったまま「沈黙」してループを切る。" },
-            { text: "相手の攻撃的な言葉は、その人の内部システムが悲鳴を上げている出力（アウトプット）である。" },
-            { text: "「言った・言わない」の不毛なループは、即座に「記録（ログ）」という仕組みで断つ。" },
-            { text: "忖度（そんたく）のループを壊すには、リーダー自らが「不都合な真実」を公開する。" },
-            { text: "組織の「愚痴」は、解決能力が欠如しているシステムからのエラーメッセージ。" },
-            { text: "相手を「変えよう」とするエネルギーを、自分の「接し方を変える」エネルギーに転換する。" },
-            { text: "承認欲求のループから抜けるには、他人の評価ではなく「自分の規律（型）」を基準にする。" },
-            { text: "信頼の負のループ（疑念→監視→反発）は、リスクを取った「先出しの信頼」で止める。" },
-            { text: "メールの往復が3回を超えたら、プロトコルを「口頭」に切り替えてループを解消する。" },
-            { text: "相手の沈黙を「合意」と誤認するループが、後に巨大なバグ（反対）として返ってくる。" },
-            { text: "ループの出口を見つけるには、要素同士を繋いでいる「因果関係の線」を一本消してみる。" },
-            { text: "ボトルネックが移動したことに気づかないと、古い対策が新たな制約を生むループに陥る。" },
-            { text: "入力（Input）を変えずに、出力（Output）が変わることを期待するのは「狂気」である。" },
-            { text: "複雑化したタスクループは、あえて「すべてをダウンサイズ（最小化）」して再構成する。" },
-            { text: "システムの遅れ（タイムラグ）を計算に入れ、結果が出る前に「次の一手」を打つのを控える。" },
-            { text: "ループから抜けるための「非常停止ボタン（中断ルール）」をあらかじめ設定しておく。" },
-            { text: "「探す時間」が発生する物理的ループは、定位置管理という「物理的な型」で封じ込める。" },
-            { text: "思考がループしたら、頭の外（紙やノート）に書き出し、ワーキングメモリを解放する。" },
-            { text: "依存している外部システム（ツール・人）を「代替可能な状態」にし、独占ループを回避する。" },
-            { text: "資産運用における損失ループは、感情を排した「機械的な損切りルール」で強制終了させる。" },
-            { text: "睡眠不足による生産性低下のループは、まず「寝る時間」を固定する逆算スケジュールで断つ。" },
-            { text: "同じミスが再発するループは、チェックリストに「なぜ」の確認項目を追加して防ぐ。" },
-            { text: "無駄な会議のループは、アジェンダ（目的）がない場合は「欠席」するという型で対応する。" },
-            { text: "収集した情報の「死蔵ループ」を防ぐため、インプットしたら即座に「アウトプット」する。" },
-            { text: "システムの構成要素を「見える化」するだけで、不要な繋がりが自然と見えてくる。" },
-            { text: "応急処置（火消し）が根本解決を隠してしまう「問題のすり替わり」ループを警戒する。" },
-            { text: "競合と同じ土俵で戦う「消耗戦ループ」を捨て、独自の「仕組み」で差別化する。" },
-            { text: "レバレッジポイントは、システムの「目的」や「ルール」を書き換える場所にある。" },
-            { text: "変化の激しい市場では、計画の「固定」を捨て、高速な「試行錯誤ループ」を採用する。" },
-            { text: "組織の「成功の罠」ループから抜けるには、あえて異質な人材をシステムに注入する。" },
-            { text: "リーダーのマイクロマネジメントが、メンバーの自律性を奪う「依存ループ」を解消する。" },
-            { text: "目標が手段を正当化し始めたら、システム全体が「暴走ループ」に入っている兆候。" },
-            { text: "サンクコスト（過去の成功）を「将来の負債」と見做し、身軽になる決断を下す。" },
-            { text: "重要な決断ほど、一時の感情（ノイズ）が去るまで待つ「3秒以上の沈黙」をシステムに組み込む。" },
-            { text: "ステークホルダー全員が「少しずつ損をする」妥協のループではなく、「共通の利益」を探す。" },
-            { text: "解決策がさらなる問題を生む「意図せざる結果」のループを予測し、予備プランを持つ。" },
-            { text: "「前例踏襲」のループを断つには、「もし今日が創業日ならどうするか？」と問う。" },
-            { text: "組織の学習能力を止める「責任転嫁」のループを、根本原因分析の文化で書き換える。" },
-            { text: "システムを動かす「力」ではなく、システムを動かす「情報」の流れをデザインする。" },
-            { text: "最終的な脱却とは、古いシステムを修理することではなく、新しいシステムを創ることである。" }
+            { text: "レバレッジポイントは、常に直感に反する場所にある。" },
+            { text: "良かれと思ってやったこと」が裏目に出る時、負のフィードバックを探す。" }
         ];
 
         let nodes = [];
@@ -341,21 +196,17 @@
         let selectedNodeId = null;
         let isRotating = true;
         let rotationAngle = 0;
-        let pendingInsertIndex = -1;
         let currentDetailNodeId = null;
+        let dragTargetId = null;
         
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyo1o9FAANNVckA2HFtsxiC8PjOjytLCzTGs0bVuAZqYoLrMcxxckUO27uzJM38gi_6Gg/exec";
         let gasUrl = localStorage.getItem('gas_url') || DEFAULT_GAS_URL;
 
-        let typingTimer = null;
-        let hintInterval = null;
-
         const dynamicLayer = document.getElementById('dynamic-layer');
         const svg = document.getElementById('svg-layer');
-        const orbitPath = document.getElementById('orbit-path');
 
         window.onload = () => {
-            const saved = localStorage.getItem('system_loops_v16_3');
+            const saved = localStorage.getItem('system_loops_v17_1');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
@@ -365,27 +216,20 @@
                 } catch(e) { console.error(e); }
             }
             document.getElementById('gas-url-input').value = gasUrl;
-            updateOrbitUI();
             distributeNodes();
             render();
             displayRandomHint();
-            hintInterval = setInterval(displayRandomHint, 8000);
+            setInterval(displayRandomHint, 8000);
+            window.addEventListener('pointermove', handlePointerMove);
+            window.addEventListener('pointerup', handlePointerUp);
             requestAnimationFrame(animate);
         };
 
-        window.onresize = updateOrbitUI;
-
-        function displayRandomHint() {
-            if (typingTimer) clearInterval(typingTimer);
-            const hint = hintsList[Math.floor(Math.random() * hintsList.length)];
-            const textEl = document.getElementById('hint-text');
-            textEl.innerText = "";
-            let i = 0;
-            typingTimer = setInterval(() => {
-                if (i < hint.text.length) {
-                    textEl.innerText += hint.text.charAt(i); i++;
-                } else { clearInterval(typingTimer); }
-            }, 120); 
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div'); el.className = 'toast'; el.innerText = msg;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 2500);
         }
 
         function getCanvasCenter() {
@@ -393,26 +237,38 @@
             return { x: container.clientWidth / 2, y: container.clientHeight / 2 };
         }
 
-        function updateOrbitUI() {
-            const center = getCanvasCenter();
-            const radius = Math.min(window.innerWidth, window.innerHeight - 114) * 0.38;
-            if (orbitPath) {
-                orbitPath.setAttribute("cx", center.x); orbitPath.setAttribute("cy", center.y); orbitPath.setAttribute("r", radius);
-            }
-        }
-
         function animate() {
             const isAnyViewOpen = document.querySelector('.view-modal.active-view') || document.querySelector('.modal.active');
-            if (isRotating && nodes.length > 0 && !isAnyViewOpen) {
+            if (isRotating && nodes.length > 0 && !isAnyViewOpen && !dragTargetId) {
                 rotationAngle += 0.0035; render();
             }
             requestAnimationFrame(animate);
         }
 
-        function distributeNodes() {
+        function toggleRotation() {
+            isRotating = !isRotating;
+            document.getElementById('rotate-icon').innerText = isRotating ? '⏸ STOP' : '▶ ROTATE';
+        }
+
+        function distributeNodes(forceAll = false) {
             if (nodes.length === 0) return;
-            nodes.forEach((node, index) => { node.baseAngle = (index / nodes.length) * 2 * Math.PI; });
+            const defaultRadius = Math.min(window.innerWidth, window.innerHeight - 114) * 0.38;
+            nodes.forEach((node, index) => { 
+                if (forceAll || (!node.isDragged && node.baseAngle === undefined)) {
+                    node.baseAngle = (index / nodes.length) * 2 * Math.PI;
+                    node.radius = defaultRadius;
+                    if (forceAll) node.isDragged = false;
+                }
+            });
             autoConnectLoop();
+        }
+
+        function alignOrbit(forceAll = true) {
+            distributeNodes(forceAll); 
+            rotationAngle = 0; 
+            render(); 
+            syncLocal();
+            showToast("全要素を均等に再配置しました");
         }
 
         function autoConnectLoop() {
@@ -422,138 +278,128 @@
             const newConnections = [];
             for (let i = 0; i < nodes.length; i++) {
                 const source = nodes[i].id; const target = nodes[(i + 1) % nodes.length].id;
-                newConnections.push({
-                    id: `${source}-${target}`, source, target,
-                    type: typeMap[`${source}-${target}`] || 'S'
-                });
+                newConnections.push({ id: `${source}-${target}`, source, target, type: typeMap[`${source}-${target}`] || 'S' });
             }
             connections = newConnections;
         }
 
-        function openCloudManager() {
-            document.getElementById('cloud-view').classList.add('active-view');
-            fetchCloudList();
-        }
-        function closeCloudManager() { document.getElementById('cloud-view').classList.remove('active-view'); }
+        function handlePointerDown(e, id) { if (isConnectMode) return; dragTargetId = id; document.querySelector(`.node[data-id="${id}"]`)?.classList.add('dragging'); }
 
-        async function fetchCloudList() {
-            if (!gasUrl) { document.getElementById('cloud-list').innerHTML = "SettingsからURLを設定してください"; return; }
-            const listEl = document.getElementById('cloud-list');
-            listEl.innerHTML = '<div class="text-center py-10 text-slate-600 text-xs italic">Fetching list...</div>';
-            
-            try {
-                const res = await fetch(gasUrl);
-                const list = await res.json();
-                if (list.length === 0) {
-                    listEl.innerHTML = '<div class="text-center py-10 text-slate-600 text-xs italic">No projects found.</div>';
-                    return;
-                }
-                listEl.innerHTML = "";
-                list.reverse().forEach(item => {
-                    const date = new Date(item.timestamp).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    const div = document.createElement('div');
-                    div.className = 'cloud-item';
-                    div.innerHTML = `
-                        <div class="flex flex-col">
-                            <span class="text-emerald-400 font-bold text-sm">${item.title}</span>
-                            <span class="text-[8px] text-slate-500 font-bold">${date}</span>
-                        </div>
-                        <button onclick='loadFromCloud(${JSON.stringify(item.data)}, "${item.title}")' class="px-4 py-2 bg-slate-800 text-emerald-400 rounded-lg text-[10px] font-black border border-emerald-500/20">LOAD</button>
-                    `;
-                    listEl.appendChild(div);
-                });
-            } catch (e) {
-                listEl.innerHTML = "通信エラーが発生しました。SettingsのURLを確認してください。";
+        function handlePointerMove(e) {
+            if (!dragTargetId) return;
+            const center = getCanvasCenter(), rect = document.getElementById('canvas-container').getBoundingClientRect();
+            const dx = e.clientX - rect.left - center.x, dy = e.clientY - rect.top - center.y;
+            const node = nodes.find(n => n.id === dragTargetId);
+            if (node) {
+                node.baseAngle = Math.atan2(dy, dx) - (isRotating ? rotationAngle : 0);
+                node.radius = Math.sqrt(dx * dx + dy * dy);
+                node.isDragged = true; render();
             }
         }
 
-        async function saveToCloud() {
-            const title = document.getElementById('save-title').value.trim();
-            if (!title) { alert("タイトルを入力してください"); return; }
-            if (!gasUrl) { alert("URL未設定"); return; }
-            
-            const btn = document.querySelector('#cloud-view button[onclick="saveToCloud()"]');
-            const originalText = btn.innerText;
-            btn.innerText = "SAVING..."; btn.disabled = true;
+        function handlePointerUp() {
+            if (dragTargetId) {
+                document.querySelector(`.node[data-id="${dragTargetId}"]`)?.classList.remove('dragging');
+                dragTargetId = null;
+                // --- 順序を角度で並べ替えたあと、即座に均等配置にスナップさせる ---
+                reorderAndHarmonize();
+                syncLocal();
+            }
+        }
 
+        // --- 移動後に順序を確定させ、均等配置へスナップする機能 ---
+        function reorderAndHarmonize() {
+            if (nodes.length < 2) return;
+            nodes.sort((a, b) => {
+                let angA = a.baseAngle % (2 * Math.PI); if (angA < 0) angA += 2 * Math.PI;
+                let angB = b.baseAngle % (2 * Math.PI); if (angB < 0) angB += 2 * Math.PI;
+                return angA - angB;
+            });
+            // ここで均等配置の再計算を実行（すべてのドラッグフラグをリセット）
+            alignOrbit(true);
+            showToast("順序を確定し整列しました");
+        }
+
+        async function fetchCloudList() {
+            const listEl = document.getElementById('cloud-list');
+            listEl.innerHTML = '<div class="text-center py-10 text-slate-600 text-xs italic">Fetching...</div>';
             try {
-                const body = { title, data: { nodes, connections, solutions } };
-                await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(body) });
-                
-                setTimeout(() => {
-                    btn.innerText = originalText; btn.disabled = false;
-                    fetchCloudList();
-                    alert(`「${title}」を保存しました。`);
-                }, 1500);
-            } catch (e) { alert("保存に失敗しました。"); btn.innerText = originalText; btn.disabled = false; }
+                const res = await fetch(gasUrl); const list = await res.json();
+                listEl.innerHTML = list.length === 0 ? '<div class="text-center py-10 text-slate-600 text-xs">No projects.</div>' : "";
+                list.reverse().forEach(item => {
+                    const div = document.createElement('div'); div.className = 'cloud-item';
+                    div.innerHTML = `
+                        <div class="flex flex-col"><span class="text-emerald-400 font-bold text-sm">${item.title}</span><span class="text-[8px] text-slate-500 font-bold">${new Date(item.timestamp).toLocaleString()}</span></div>
+                        <button onclick='loadFromCloud(${JSON.stringify(item.data)}, "${item.title}")' class="px-4 py-2 bg-slate-800 text-emerald-400 rounded-lg text-[10px] font-black">LOAD</button>
+                    `;
+                    listEl.appendChild(div);
+                });
+            } catch (e) { listEl.innerHTML = "Error."; }
+        }
+
+        async function saveToCloud() {
+            const title = document.getElementById('save-title').value.trim(); if (!title) return;
+            const btn = document.querySelector('#cloud-view button[onclick="saveToCloud()"]');
+            btn.innerText = "SAVING..."; btn.disabled = true;
+            try {
+                await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ title, data: { nodes, connections, solutions } }) });
+                setTimeout(() => { btn.innerText = "SAVE PROJECT"; btn.disabled = false; fetchCloudList(); showToast("保存完了"); }, 1000);
+            } catch (e) { showToast("保存失敗"); btn.disabled = false; }
         }
 
         function loadFromCloud(data, title) {
-            if (!confirm(`「${title}」を読み込みますか？ 現在のループは破棄されます。`)) return;
-            nodes = data.nodes || [];
-            connections = data.connections || [];
-            solutions = data.solutions || {};
-            distributeNodes();
-            render();
-            syncLocal();
-            closeCloudManager();
+            nodes = data.nodes || []; connections = data.connections || []; solutions = data.solutions || {};
+            distributeNodes(); render(); syncLocal(); closeCloudManager(); showToast("読み込み完了");
         }
 
+        function openCloudManager() { document.getElementById('cloud-view').classList.add('active-view'); fetchCloudList(); }
+        function closeCloudManager() { document.getElementById('cloud-view').classList.remove('active-view'); }
         function openSettings() { document.getElementById('settings-view').classList.add('active-view'); }
         function closeSettings() { document.getElementById('settings-view').classList.remove('active-view'); }
-        function saveSettings() { 
-            const newUrl = document.getElementById('gas-url-input').value;
-            gasUrl = newUrl;
-            localStorage.setItem('gas_url', gasUrl); 
-            alert("設定を保存しました"); 
-            closeSettings(); 
-        }
-
-        function openNodeModal(insertAt = -1) {
-            pendingInsertIndex = insertAt;
-            document.getElementById('node-modal').classList.add('active');
-            setTimeout(() => document.getElementById('node-input').focus(), 100);
-        }
+        function saveSettings() { gasUrl = document.getElementById('gas-url-input').value; localStorage.setItem('gas_url', gasUrl); showToast("URL設定保存"); closeSettings(); }
+        function openNodeModal() { document.getElementById('node-modal').classList.add('active'); setTimeout(() => document.getElementById('node-input').focus(), 100); }
         function closeNodeModal() { document.getElementById('node-modal').classList.remove('active'); document.getElementById('node-input').value = ''; }
-        function addNode() {
-            const label = document.getElementById('node-input').value; if (!label) return;
-            nodes.push({ id: Date.now(), label, baseAngle: Math.PI / 2 });
-            distributeNodes(); closeNodeModal(); render(); displayRandomHint();
+        
+        function addNode() { 
+            const label = document.getElementById('node-input').value; 
+            if (!label) return; 
+            nodes.push({ id: Date.now(), label, isDragged: false }); 
+            distributeNodes(true); 
+            closeNodeModal(); 
+            render(); 
+            showToast("最適配置で追加しました");
         }
 
         function toggleConnectMode() {
             isConnectMode = !isConnectMode;
             const btn = document.getElementById('connect-btn');
-            btn.className = isConnectMode ? "pointer-events-auto px-8 py-3 bg-amber-500 text-slate-950 rounded-xl font-black text-[10px] shadow-xl" : "pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px] shadow-xl backdrop-blur-md";
+            btn.className = isConnectMode ? "pointer-events-auto px-8 py-3 bg-amber-500 text-slate-950 rounded-xl font-black text-[10px]" : "pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px]";
             btn.innerText = isConnectMode ? 'ターゲットを選択...' : '極性切替';
-            if (!isConnectMode) selectedNodeId = null;
-            render();
+            if (!isConnectMode) selectedNodeId = null; render();
         }
-
         function handleNodeClick(id) {
             if (isConnectMode) {
-                if (selectedNodeId === null) { selectedNodeId = id; document.getElementById('connect-btn').innerText = 'ターゲットを選択'; }
+                if (selectedNodeId === null) { selectedNodeId = id; document.getElementById('connect-btn').innerText = '次を選択'; }
                 else if (selectedNodeId !== id) { tempTargetId = id; document.getElementById('conn-modal').classList.add('active'); }
                 render();
             } else { openDetail(id); }
         }
-
         function openDetail(id) {
             const node = nodes.find(n => n.id === id); if (!node) return;
-            currentDetailNodeId = id;
-            document.getElementById('detail-node-label').innerText = node.label;
+            currentDetailNodeId = id; document.getElementById('detail-node-label').innerText = node.label;
             document.getElementById('solution-input').value = solutions[id] || "";
             document.getElementById('detail-view').classList.add('active-view');
         }
         function closeDetail() { document.getElementById('detail-view').classList.remove('active-view'); render(); }
-        function saveSolution() { if (currentDetailNodeId) { solutions[currentDetailNodeId] = document.getElementById('solution-input').value; syncLocal(); closeDetail(); } }
+        function saveSolution() { if (currentDetailNodeId) { solutions[currentDetailNodeId] = document.getElementById('solution-input').value; syncLocal(); closeDetail(); showToast("データ保存"); } }
         function deleteCurrentNode() {
-            if (confirm("要素を削除しますか？")) {
-                nodes = nodes.filter(n => n.id !== currentDetailNodeId);
-                connections = connections.filter(c => c.source !== currentDetailNodeId && c.target !== currentDetailNodeId);
-                delete solutions[currentDetailNodeId];
-                distributeNodes(); syncLocal(); closeDetail();
-            }
+            nodes = nodes.filter(n => n.id !== currentDetailNodeId);
+            connections = connections.filter(c => c.source !== currentDetailNodeId && c.target !== currentDetailNodeId);
+            delete solutions[currentDetailNodeId]; 
+            distributeNodes(true); 
+            syncLocal(); 
+            closeDetail();
+            showToast("削除と再配置を完了");
         }
 
         function completeConnection(type) {
@@ -564,23 +410,23 @@
         }
 
         function getRotatedPos(node, extraRadius = 0) {
-            const center = getCanvasCenter();
-            const radius = Math.min(window.innerWidth, window.innerHeight - 114) * 0.38 + extraRadius;
-            const currentAngle = node.baseAngle + (isRotating ? rotationAngle : 0);
-            return { x: center.x + radius * Math.cos(currentAngle), y: center.y + radius * Math.sin(currentAngle), angle: currentAngle };
+            const center = getCanvasCenter(), r = (node.radius || 0) + extraRadius;
+            const currentAngle = (node.baseAngle || 0) + (isRotating ? rotationAngle : 0);
+            return { x: center.x + r * Math.cos(currentAngle), y: center.y + r * Math.sin(currentAngle), angle: currentAngle, radius: r };
         }
 
         function render() {
             const currentIds = nodes.map(n => n.id.toString());
             document.querySelectorAll('.node, .solution-cloud').forEach(el => { if (!currentIds.includes(el.dataset.id)) el.remove(); });
-            document.querySelectorAll('.add-between-btn').forEach(el => el.remove());
 
             nodes.forEach(node => {
                 const pos = getRotatedPos(node);
                 let div = document.querySelector(`.node[data-id="${node.id}"]`);
                 if (!div) {
                     div = document.createElement('div'); div.className = 'node'; div.dataset.id = node.id;
-                    div.addEventListener('click', () => handleNodeClick(node.id)); dynamicLayer.appendChild(div);
+                    div.addEventListener('click', (e) => { if (!dragTargetId) handleNodeClick(node.id); });
+                    div.addEventListener('pointerdown', (e) => handlePointerDown(e, node.id));
+                    dynamicLayer.appendChild(div);
                 }
                 div.style.left = pos.x + 'px'; div.style.top = pos.y + 'px'; div.textContent = node.label; div.classList.toggle('selected', selectedNodeId === node.id);
 
@@ -592,39 +438,32 @@
                         cloud.onclick = (e) => { e.stopPropagation(); openDetail(node.id); }; dynamicLayer.appendChild(cloud);
                     }
                     cloud.style.left = cloudPos.x + 'px'; cloud.style.top = cloudPos.y + 'px'; cloud.textContent = solutions[node.id];
-                } else {
-                    const cloud = document.querySelector(`.solution-cloud[data-id="${node.id}"]`); if (cloud) cloud.remove();
                 }
             });
 
-            while (svg.lastChild && svg.lastChild.nodeName !== 'defs' && svg.lastChild.id !== 'orbit-path') svg.removeChild(svg.lastChild);
-            const center = getCanvasCenter(); const radius = Math.min(window.innerWidth, window.innerHeight - 114) * 0.38;
-
-            connections.forEach((conn, index) => {
+            while (svg.lastChild && svg.lastChild.nodeName !== 'defs') svg.removeChild(svg.lastChild);
+            connections.forEach((conn) => {
                 const sNode = nodes.find(n => n.id === conn.source), tNode = nodes.find(n => n.id === conn.target);
                 if (!sNode || !tNode) return;
                 const s = getRotatedPos(sNode), t = getRotatedPos(tNode);
-                let diff = (t.angle - s.angle) % (2 * Math.PI); if (diff < 0) diff += 2 * Math.PI;
+                const radius = (s.radius + t.radius) / 2;
+                let diff = (t.angle - s.angle) % (2 * Math.PI);
+                if (diff < 0) diff += 2 * Math.PI;
                 const largeArc = diff > Math.PI ? 1 : 0;
+                
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 path.setAttribute("d", `M ${s.x} ${s.y} A ${radius} ${radius} 0 ${largeArc} 1 ${t.x} ${t.y}`);
                 path.setAttribute("class", "flow-line"); path.setAttribute("stroke", conn.type === 'S' ? '#10b981' : '#f43f5e');
-                path.setAttribute("marker-end", conn.type === 'S' ? "url(#arrowhead)" : "url(#arrowhead-red)"); svg.appendChild(path);
+                path.setAttribute("marker-end", conn.type === 'S' ? "url(#arrowhead)" : "url(#arrowhead-red)");
+                svg.appendChild(path);
                 
                 const midAngle = s.angle + diff / 2;
-                const labelX = center.x + (radius + 28) * Math.cos(midAngle), labelY = center.y + (radius + 28) * Math.sin(midAngle);
+                const lx = getCanvasCenter().x + (radius + 25) * Math.cos(midAngle);
+                const ly = getCanvasCenter().y + (radius + 25) * Math.sin(midAngle);
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                text.setAttribute("x", labelX); text.setAttribute("y", labelY);
+                text.setAttribute("x", lx); text.setAttribute("y", ly);
                 text.setAttribute("class", conn.type === 'S' ? 'label-s' : 'label-o');
-                text.setAttribute("text-anchor", "middle"); text.setAttribute("dominant-baseline", "middle");
-                text.textContent = conn.type; svg.appendChild(text);
-
-                if (!isConnectMode) {
-                    const btn = document.createElement('div'); btn.className = 'add-between-btn'; btn.innerHTML = '＋';
-                    const btnX = center.x + radius * Math.cos(midAngle), btnY = center.y + radius * Math.sin(midAngle);
-                    btn.style.left = btnX + 'px'; btn.style.top = btnY + 'px';
-                    btn.onclick = (e) => { e.stopPropagation(); openNodeModal(index); }; dynamicLayer.appendChild(btn);
-                }
+                text.setAttribute("text-anchor", "middle"); text.textContent = conn.type; svg.appendChild(text);
             });
 
             if (!isConnectMode) {
@@ -638,11 +477,16 @@
                     }
                 });
             }
-            syncLocal();
         }
 
-        function syncLocal() { localStorage.setItem('system_loops_v16_3', JSON.stringify({nodes, connections, solutions})); }
-        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v16_3'); nodes=[]; connections=[]; solutions={}; render(); displayRandomHint(); } }
+        function displayRandomHint() {
+            const hint = hintsList[Math.floor(Math.random() * hintsList.length)];
+            const textEl = document.getElementById('hint-text');
+            if (textEl) textEl.innerText = hint.text;
+        }
+
+        function syncLocal() { localStorage.setItem('system_loops_v17_1', JSON.stringify({nodes, connections, solutions})); }
+        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v17_1'); nodes=[]; connections=[]; solutions={}; render(); } }
     </script>
 </body>
 </html>
