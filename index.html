@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Loop Creator - Tactical Bottom UI v14.4</title>
+    <title>System Loop Creator - Contemplative Signal v15.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
@@ -11,7 +11,7 @@
         #canvas-container { 
             position: relative; 
             width: 100vw; 
-            height: calc(100vh - 80px); 
+            height: calc(100vh - 120px); 
             overflow: hidden; 
             background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
             animation: fadeIn 1s ease-out;
@@ -20,11 +20,34 @@
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        header { position: relative; z-index: 50; }
+        header { position: relative; z-index: 100; }
+
+        /* ヒントバナーのスタイル */
+        #hint-banner {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+            padding: 12px 24px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 90;
+            position: relative;
+        }
+        #hint-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: #fde047; /* Signal Yellow */
+            line-height: 1.5;
+            text-align: center;
+            letter-spacing: 0.05em;
+            text-shadow: 0 0 10px rgba(253, 224, 71, 0.2);
+            min-height: 1.5em;
+        }
 
         .orbit-guide { fill: none; stroke: rgba(16, 185, 129, 0.06); stroke-width: 2; }
 
-        /* ノードの文字サイズを小さく維持 (v10の要望反映) */
         .node { 
             position: absolute; 
             padding: 10px 18px; 
@@ -86,7 +109,6 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 400; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
         .modal.active { display: flex; }
         
-        /* フローティングボタン共通 */
         .fab {
             position: fixed; bottom: 32px; width: 64px; height: 64px;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -96,9 +118,7 @@
 
         .fab-add { right: 24px; background: #10b981; color: white; font-size: 32px; font-weight: 900; }
         .fab-settings { left: 24px; background: #1e293b; color: #94a3b8; font-size: 24px; }
-        
         .fab:active { transform: scale(0.9); }
-        .fab-settings:hover { color: #10b981; border-color: #10b981; }
 
         .header-btn {
             background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);
@@ -113,14 +133,14 @@
 </head>
 <body>
 
-    <header class="p-4 bg-slate-900/95 border-b border-emerald-500/20 flex justify-between items-center backdrop-blur-xl">
+    <header class="p-4 bg-slate-900/95 flex justify-between items-center backdrop-blur-xl">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
                 <svg class="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
             <div class="flex flex-col">
-                <h1 class="text-xs font-black text-white tracking-tighter italic text-emerald-400">Cloud Orchestrator</h1>
-                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em]">v14.4 nimogram</span>
+                <h1 class="text-xs font-black text-white tracking-tighter italic text-emerald-400 leading-none">Cloud Orchestrator</h1>
+                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v15.3 contemplative signal</span>
             </div>
         </div>
         
@@ -132,6 +152,10 @@
             <button onclick="clearCanvas()" class="px-3 py-1.5 text-[8px] bg-red-900/10 text-red-500 border border-red-500/20 rounded-full font-bold">RESET</button>
         </div>
     </header>
+
+    <div id="hint-banner">
+        <span id="hint-text"></span>
+    </div>
 
     <div id="canvas-container">
         <div id="dynamic-layer" class="w-full h-full relative">
@@ -145,18 +169,14 @@
         </div>
     </div>
 
-    <!-- 左下設定ボタン (移動先) -->
     <button onclick="openSettings()" class="fab fab-settings" aria-label="Settings">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
     </button>
-
-    <!-- 右下追加ボタン -->
     <button onclick="openNodeModal()" class="fab fab-add">＋</button>
 
-    <!-- Settings View -->
     <div id="settings-view">
         <div class="max-w-md mx-auto">
-            <button onclick="closeSettings()" class="text-slate-400 font-bold mb-10 flex items-center gap-2">← Back to Dashboard</button>
+            <button onclick="closeSettings()" class="text-slate-400 font-bold mb-10 flex items-center gap-2">← Back</button>
             <h2 class="text-2xl font-black mb-8 text-emerald-400 italic">Configuration</h2>
             <div class="space-y-6">
                 <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
@@ -168,7 +188,6 @@
         </div>
     </div>
 
-    <!-- Detail View -->
     <div id="detail-view">
         <div class="max-w-md mx-auto h-full flex flex-col pb-10">
             <button onclick="closeDetail()" class="text-slate-400 font-bold mb-6">← Back</button>
@@ -183,19 +202,17 @@
         </div>
     </div>
 
-    <!-- Bottom Nav -->
     <div id="bottom-nav" class="fixed bottom-0 left-0 w-full p-10 px-24 flex items-center justify-center pointer-events-none">
         <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px] shadow-2xl backdrop-blur-md">極性切替</button>
     </div>
 
-    <!-- Modals -->
     <div id="node-modal" class="modal p-6">
         <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl">
             <h2 class="text-lg font-black mb-1 text-white text-center italic text-emerald-400">Feed Data</h2>
-            <input type="text" id="node-input" class="w-full p-4 bg-slate-800/50 border border-slate-700 text-white rounded-xl mb-6 focus:border-emerald-500 outline-none font-bold text-center text-lg shadow-inner" placeholder="...">
+            <input type="text" id="node-input" class="w-full p-4 bg-slate-800/50 border border-slate-700 text-white rounded-xl mb-6 focus:border-emerald-500 outline-none font-bold text-center text-lg" placeholder="...">
             <div class="flex gap-3">
                 <button onclick="closeNodeModal()" class="flex-1 py-4 text-slate-500 font-bold text-xs">CANCEL</button>
-                <button onclick="addNode()" class="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black uppercase">Engage</button>
+                <button onclick="addNode()" class="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black uppercase shadow-lg shadow-emerald-900/20">Engage</button>
             </div>
         </div>
     </div>
@@ -217,6 +234,29 @@
     </div>
 
     <script>
+        const hintsList = [
+            { text: "「同じ問題が形を変えて何度も起きる」時、そこには必ず隠れたループがある。" },
+            { text: "犯人（人）を探すのをやめ、行動を強制している「構造（ループ）」を探す。" },
+            { text: "目の前の「火消し」が、将来の「大火事」の燃料になっていないか自問する。" },
+            { text: "成功している時こそ、自分を慢心させる「自己強化ループ」の副作用を警戒する。" },
+            { text: "「良かれと思ってやったこと」が裏目に出る時、負のフィードバックを探す。" },
+            { text: "相手との沈黙や反発は、互いの「メンタルモデル」が衝突しているループの出口。" },
+            { text: "組織の「忖度」は、情報の質を下げ、判断を誤らせる典型的な悪循環である。" },
+            { text: "「言っても無駄だ」という学習性無力感のループを、小さな成功体験で断ち切る。" },
+            { text: "批判のループを止めるには、まず自分が「理解しました」とパケットを受け取る。" },
+            { text: "信頼が欠如するとマイクロマネジメントが増え、さらに信頼が減るループを自覚する。" },
+            { text: "ループから脱却するには、要素を増やすのではなく「不要な繋がり」を断つ。" },
+            { text: "ボトルネック（制約）を無視して他の部分を強化すると、システムは必ず歪む。" },
+            { text: "介入の結果が出るまでには必ず「遅れ」がある。焦って追加投入しない。" },
+            { text: "ループの図解（システム原型）を書き出し、客観的な「外の視点」を持つ。" },
+            { text: "数値化（測定）することで、主観では見えない「波の周期」を可視化する。" },
+            { text: "レバレッジポイント（最小の力で最大の変化が出る点）は、常に直感に反する場所にある。" },
+            { text: "短期的な問題解決（応急処置）と、長期的な根本解決（根本治療）を明確に分ける。" },
+            { text: "外部の力を借りてループに「新しい風（入力）」を入れ、閉鎖的な循環を壊す。" },
+            { text: "「サンクコスト（過去の投資）」に縛られるループは、勇気を持って損切りする。" },
+            { text: "システム全体が目指すべき「真の目的（North Star）」を再定義し、ベクトルを揃える。" }
+        ];
+
         let nodes = [];
         let connections = [];
         let solutions = {};
@@ -227,34 +267,59 @@
         let pendingInsertIndex = -1;
         let currentDetailNodeId = null;
         let gasUrl = localStorage.getItem('gas_url') || "";
+        let typingTimer = null;
+        let hintInterval = null;
 
         const dynamicLayer = document.getElementById('dynamic-layer');
         const svg = document.getElementById('svg-layer');
         const orbitPath = document.getElementById('orbit-path');
 
         window.onload = () => {
-            const saved = localStorage.getItem('system_loops_v14_4');
+            const saved = localStorage.getItem('system_loops_v15_3');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
                     nodes = data.nodes || [];
                     connections = data.connections || [];
                     solutions = data.solutions || {};
-                } catch(e) { console.error("Restore failed", e); }
+                } catch(e) { console.error(e); }
             }
             document.getElementById('gas-url').value = gasUrl;
             updateOrbitUI();
             distributeNodes();
             render();
+            
+            // 初回表示 & 8秒サイクル開始
+            displayRandomHint();
+            hintInterval = setInterval(displayRandomHint, 8000);
+            
             requestAnimationFrame(animate);
         };
 
         window.onresize = updateOrbitUI;
 
+        function displayRandomHint() {
+            if (typingTimer) clearInterval(typingTimer);
+            const hint = hintsList[Math.floor(Math.random() * hintsList.length)];
+            const textEl = document.getElementById('hint-text');
+            
+            textEl.innerText = "";
+            let i = 0;
+            // タイピング速度を120msに遅延（ Contemplative speed ）
+            typingTimer = setInterval(() => {
+                if (i < hint.text.length) {
+                    textEl.innerText += hint.text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typingTimer);
+                }
+            }, 120); 
+        }
+
         function updateOrbitUI() {
             const centerX = window.innerWidth / 2;
-            const centerY = (window.innerHeight - 80) / 2;
-            const radius = Math.min(window.innerWidth, window.innerHeight - 80) * 0.38;
+            const centerY = (window.innerHeight - 124) / 2 + 50; 
+            const radius = Math.min(window.innerWidth, window.innerHeight - 124) * 0.38;
             if (orbitPath) {
                 orbitPath.setAttribute("cx", centerX);
                 orbitPath.setAttribute("cy", centerY);
@@ -296,7 +361,7 @@
         }
 
         async function cloudSync() {
-            if (!gasUrl) { alert("左下の歯車からURLを設定してください"); return; }
+            if (!gasUrl) { alert("SettingsからURLを設定してください"); return; }
             const icon = document.getElementById('sync-icon');
             const loader = document.getElementById('sync-loader');
             icon.style.display = 'none'; loader.style.display = 'block';
@@ -328,6 +393,7 @@
             if (!label) return;
             nodes.push({ id: Date.now(), label, baseAngle: Math.PI / 2 });
             distributeNodes(); closeNodeModal(); render();
+            displayRandomHint();
         }
 
         function toggleConnectMode() {
@@ -374,8 +440,8 @@
 
         function getRotatedPos(node, extraRadius = 0) {
             const centerX = window.innerWidth / 2;
-            const centerY = (window.innerHeight - 80) / 2;
-            const radius = Math.min(window.innerWidth, window.innerHeight - 80) * 0.38 + extraRadius;
+            const centerY = (window.innerHeight - 124) / 2 + 50; 
+            const radius = Math.min(window.innerWidth, window.innerHeight - 124) * 0.38 + extraRadius;
             const currentAngle = node.baseAngle + (isRotating ? rotationAngle : 0);
             return { x: centerX + radius * Math.cos(currentAngle), y: centerY + radius * Math.sin(currentAngle), angle: currentAngle };
         }
@@ -416,8 +482,8 @@
             });
 
             while (svg.lastChild && svg.lastChild.nodeName !== 'defs' && svg.lastChild.id !== 'orbit-path') svg.removeChild(svg.lastChild);
-            const centerX = window.innerWidth / 2, centerY = (window.innerHeight - 80) / 2;
-            const radius = Math.min(window.innerWidth, window.innerHeight - 80) * 0.38;
+            const centerX = window.innerWidth / 2, centerY = (window.innerHeight - 124) / 2 + 50;
+            const radius = Math.min(window.innerWidth, window.innerHeight - 124) * 0.38;
 
             connections.forEach((conn, index) => {
                 const sNode = nodes.find(n => n.id === conn.source), tNode = nodes.find(n => n.id === conn.target);
@@ -463,8 +529,8 @@
             syncLocal();
         }
 
-        function syncLocal() { localStorage.setItem('system_loops_v14_4', JSON.stringify({nodes, connections, solutions})); }
-        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v14_4'); nodes=[]; connections=[]; solutions={}; render(); } }
+        function syncLocal() { localStorage.setItem('system_loops_v15_3', JSON.stringify({nodes, connections, solutions})); }
+        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v15_3'); nodes=[]; connections=[]; solutions={}; render(); displayRandomHint(); } }
     </script>
 </body>
 </html>
