@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Loop Creator - Contemplative Signal v15.3</title>
+    <title>System Loop Creator - Insight Tracker v15.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
@@ -22,13 +22,13 @@
 
         header { position: relative; z-index: 100; }
 
-        /* ヒントバナーのスタイル */
+        /* ヒントバナーのスタイル: カテゴリーなし、黄色テキスト */
         #hint-banner {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(16, 185, 129, 0.1);
-            padding: 12px 24px;
-            min-height: 50px;
+            padding: 14px 28px;
+            min-height: 54px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -36,13 +36,13 @@
             position: relative;
         }
         #hint-text {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 700;
             color: #fde047; /* Signal Yellow */
             line-height: 1.5;
             text-align: center;
             letter-spacing: 0.05em;
-            text-shadow: 0 0 10px rgba(253, 224, 71, 0.2);
+            text-shadow: 0 0 12px rgba(253, 224, 71, 0.25);
             min-height: 1.5em;
         }
 
@@ -140,7 +140,7 @@
             </div>
             <div class="flex flex-col">
                 <h1 class="text-xs font-black text-white tracking-tighter italic text-emerald-400 leading-none">Cloud Orchestrator</h1>
-                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v15.3 contemplative signal</span>
+                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v15.4 insight tracker</span>
             </div>
         </div>
         
@@ -254,7 +254,57 @@
             { text: "短期的な問題解決（応急処置）と、長期的な根本解決（根本治療）を明確に分ける。" },
             { text: "外部の力を借りてループに「新しい風（入力）」を入れ、閉鎖的な循環を壊す。" },
             { text: "「サンクコスト（過去の投資）」に縛られるループは、勇気を持って損切りする。" },
-            { text: "システム全体が目指すべき「真の目的（North Star）」を再定義し、ベクトルを揃える。" }
+            { text: "システム全体が目指すべき「真の目的（North Star）」を再定義し、ベクトルを揃える。" },
+            { text: "「なぜかいつもこうなる」という違和感は、潜在的なループの検知アラートである。" },
+            { text: "犯人探しを「構造の不備探し」に置換し、感情的なサンクコストをカットする。" },
+            { text: "短期的な「快楽」が長期的な「苦痛」を生む構造（依存のループ）を直視する。" },
+            { text: "変化を拒む抵抗勢力は、システムの「安全装置（ホメオスタシス）」だと解釈する。" },
+            { text: "「頑張れば解決する」という精神論が、実は根本解決を遅らせる最大のループ。" },
+            { text: "成功している時ほど、次の「衰退ループ」の種が蒔かれていると謙虚に構える。" },
+            { text: "自分の「正しさ」への執着が、相手の「反発」を生む双方向ループを自覚する。" },
+            { text: "「いつかやる」という思考停止ループを、「今、5分だけやる」で強制終了する。" },
+            { text: "失敗を「データ不足」と捉え、学習ループの入力（インプット）に変換する。" },
+            { text: "完璧主義という「終わりのないループ」を、「完了主義」で上書きする。" },
+            { text: "会話のドッジボールが続くなら、一旦ボールを持ったまま「沈黙」してループを切る。" },
+            { text: "相手の攻撃的な言葉は、その人の内部システムが悲鳴を上げている出力（アウトプット）である。" },
+            { text: "「言った・言わない」の不毛なループは、即座に「記録（ログ）」という仕組みで断つ。" },
+            { text: "忖度（そんたく）のループを壊すには、リーダー自らが「不都合な真実」を公開する。" },
+            { text: "組織の「愚痴」は、解決能力が欠如しているシステムからのエラーメッセージ。" },
+            { text: "相手を「変えよう」とするエネルギーを、自分の「接し方を変える」エネルギーに転換する。" },
+            { text: "承認欲求のループから抜けるには、他人の評価ではなく「自分の規律（型）」を基準にする。" },
+            { text: "信頼の負のループ（疑念→監視→反発）は、リスクを取った「先出しの信頼」で止める。" },
+            { text: "メールの往復が3回を超えたら、プロトコルを「口頭」に切り替えてループを解消する。" },
+            { text: "相手の沈黙を「合意」と誤認するループが、後に巨大なバグ（反対）として返ってくる。" },
+            { text: "ループの出口を見つけるには、要素同士を繋いでいる「因果関係の線」を一本消してみる。" },
+            { text: "ボトルネックが移動したことに気づかないと、古い対策が新たな制約を生むループに陥る。" },
+            { text: "入力（Input）を変えずに、出力（Output）が変わることを期待するのは「狂気」である。" },
+            { text: "複雑化したタスクループは、あえて「すべてをダウンサイズ（最小化）」して再構成する。" },
+            { text: "システムの遅れ（タイムラグ）を計算に入れ、結果が出る前に「次の一手」を打つのを控える。" },
+            { text: "ループから抜けるための「非常停止ボタン（中断ルール）」をあらかじめ設定しておく。" },
+            { text: "「探す時間」が発生する物理的ループは、定位置管理という「物理的な型」で封じ込める。" },
+            { text: "思考がループしたら、頭の外（紙やノート）に書き出し、ワーキングメモリを解放する。" },
+            { text: "依存している外部システム（ツール・人）を「代替可能な状態」にし、独占ループを回避する。" },
+            { text: "資産運用における損失ループは、感情を排した「機械的な損切りルール」で強制終了させる。" },
+            { text: "睡眠不足による生産性低下のループは、まず「寝る時間」を固定する逆算スケジュールで断つ。" },
+            { text: "同じミスが再発するループは、チェックリストに「なぜ」の確認項目を追加して防ぐ。" },
+            { text: "無駄な会議のループは、アジェンダ（目的）がない場合は「欠席」するという型で対応する。" },
+            { text: "収集した情報の「死蔵ループ」を防ぐため、インプットしたら即座に「アウトプット」する。" },
+            { text: "システムの構成要素を「見える化」するだけで、不要な繋がりが自然と見えてくる。" },
+            { text: "応急処置（火消し）が根本解決を隠してしまう「問題のすり替わり」ループを警戒する。" },
+            { text: "競合と同じ土俵で戦う「消耗戦ループ」を捨て、独自の「仕組み」で差別化する。" },
+            { text: "レバレッジポイントは、システムの「目的」や「ルール」を書き換える場所にある。" },
+            { text: "変化の激しい市場では、計画の「固定」を捨て、高速な「試行錯誤ループ」を採用する。" },
+            { text: "組織の「成功の罠」ループから抜けるには、あえて異質な人材をシステムに注入する。" },
+            { text: "リーダーのマイクロマネジメントが、メンバーの自律性を奪う「依存ループ」を解消する。" },
+            { text: "目標が手段を正当化し始めたら、システム全体が「暴走ループ」に入っている兆候。" },
+            { text: "サンクコスト（過去の成功）を「将来の負債」と見做し、身軽になる決断を下す。" },
+            { text: "重要な決断ほど、一時の感情（ノイズ）が去るまで待つ「3秒以上の沈黙」をシステムに組み込む。" },
+            { text: "ステークホルダー全員が「少しずつ損をする」妥協のループではなく、「共通の利益」を探す。" },
+            { text: "解決策がさらなる問題を生む「意図せざる結果」のループを予測し、予備プランを持つ。" },
+            { text: "「前例踏襲」のループを断つには、「もし今日が創業日ならどうするか？」と問う。" },
+            { text: "組織の学習能力を止める「責任転嫁」のループを、根本原因分析の文化で書き換える。" },
+            { text: "システムを動かす「力」ではなく、システムを動かす「情報」の流れをデザインする。" },
+            { text: "最終的な脱却とは、古いシステムを修理することではなく、新しいシステムを創ることである。" }
         ];
 
         let nodes = [];
@@ -275,7 +325,7 @@
         const orbitPath = document.getElementById('orbit-path');
 
         window.onload = () => {
-            const saved = localStorage.getItem('system_loops_v15_3');
+            const saved = localStorage.getItem('system_loops_v15_4');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
@@ -305,7 +355,7 @@
             
             textEl.innerText = "";
             let i = 0;
-            // タイピング速度を120msに遅延（ Contemplative speed ）
+            // 1文字120ms (Contemplative speed)
             typingTimer = setInterval(() => {
                 if (i < hint.text.length) {
                     textEl.innerText += hint.text.charAt(i);
@@ -529,8 +579,8 @@
             syncLocal();
         }
 
-        function syncLocal() { localStorage.setItem('system_loops_v15_3', JSON.stringify({nodes, connections, solutions})); }
-        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v15_3'); nodes=[]; connections=[]; solutions={}; render(); displayRandomHint(); } }
+        function syncLocal() { localStorage.setItem('system_loops_v15_4', JSON.stringify({nodes, connections, solutions})); }
+        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v15_4'); nodes=[]; connections=[]; solutions={}; render(); displayRandomHint(); } }
     </script>
 </body>
 </html>
