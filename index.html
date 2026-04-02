@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Loop Creator - Cloud Orchestrator v14</title>
+    <title>System Loop Creator - Tactical Bottom UI v14.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
         
-        /* マイクロアニメーション: 全体のフェードイン */
         #canvas-container { 
             position: relative; 
             width: 100vw; 
@@ -16,17 +15,16 @@
             overflow: hidden; 
             background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
             animation: fadeIn 1s ease-out;
+            z-index: 1;
         }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .orbit-guide {
-            fill: none;
-            stroke: rgba(16, 185, 129, 0.06);
-            stroke-width: 2;
-        }
+        header { position: relative; z-index: 50; }
 
-        /* マイクロアニメーション: ノードの挙動 */
+        .orbit-guide { fill: none; stroke: rgba(16, 185, 129, 0.06); stroke-width: 2; }
+
+        /* ノードの文字サイズを小さく維持 (v10の要望反映) */
         .node { 
             position: absolute; 
             padding: 10px 18px; 
@@ -35,133 +33,105 @@
             border-radius: 9999px; 
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); 
             user-select: none;
-            z-index: 20;
+            z-index: 30;
             min-width: 100px;
             text-align: center;
             font-weight: 700;
             color: #fff;
             backdrop-filter: blur(12px);
             transform: translate(-50%, -50%);
-            font-size: 13px; 
+            font-size: 12px; 
             transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), 
                         top 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
-                        transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                        border-color 0.3s ease;
+                        transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
         }
-        .node:hover { transform: translate(-50%, -50%) scale(1.08); border-color: #34d399; }
-        .node:active { transform: translate(-50%, -50%) scale(0.95); }
 
-        /* 解決策の雲（Cloud）の浮遊アニメーション */
         .solution-cloud {
-            position: absolute;
-            padding: 8px 14px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px dashed #34d399;
-            border-radius: 20px;
-            color: #a7f3d0;
-            font-size: 10px;
-            max-width: 120px;
-            text-align: center;
-            z-index: 15;
-            transform: translate(-50%, -50%);
-            backdrop-filter: blur(4px);
-            pointer-events: auto;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            position: absolute; padding: 8px 14px;
+            background: rgba(16, 185, 129, 0.15); border: 1px dashed #34d399; border-radius: 20px;
+            color: #a7f3d0; font-size: 10px; max-width: 120px; text-align: center;
+            z-index: 25; transform: translate(-50%, -50%); backdrop-filter: blur(4px);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             animation: floatCloud 6s ease-in-out infinite;
-            transition: left 0.8s ease-in-out, top 0.8s ease-in-out;
-        }
-
-        @keyframes floatCloud {
-            0%, 100% { transform: translate(-50%, -52%); }
-            50% { transform: translate(-50%, -48%); }
-        }
-        
-        .add-between-btn {
-            position: absolute;
-            width: 24px; height: 24px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.5);
-            border-radius: 50%;
-            color: #10b981;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 16px; font-weight: bold;
-            z-index: 10;
-            transform: translate(-50%, -50%);
-            transition: all 0.2s ease;
+            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
             cursor: pointer;
         }
-        .add-between-btn:hover { background: #10b981; color: #020617; transform: translate(-50%, -50%) scale(1.3); }
+
+        @keyframes floatCloud { 0%, 100% { margin-top: -2px; } 50% { margin-top: 2px; } }
+        
+        .add-between-btn {
+            position: absolute; width: 24px; height: 24px;
+            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.5);
+            border-radius: 50%; color: #10b981; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: bold; z-index: 20; transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
 
         svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        
-        .flow-line {
-            fill: none; stroke-width: 3; stroke-dasharray: 12, 6;
-            animation: flow 0.6s linear infinite;
-        }
+        .flow-line { fill: none; stroke-width: 3; stroke-dasharray: 12, 6; animation: flow 0.6s linear infinite; }
+        .solution-line { fill: none; stroke: rgba(52, 211, 153, 0.3); stroke-width: 1; stroke-dasharray: 4, 2; }
         @keyframes flow { from { stroke-dashoffset: 36; } to { stroke-dashoffset: 0; } }
 
         .label-s { fill: #10b981; font-weight: 900; font-size: 14px; opacity: 0.8; }
         .label-o { fill: #f43f5e; font-weight: 900; font-size: 14px; opacity: 0.8; }
 
-        /* ビュー遷移アニメーション */
         #detail-view, #settings-view {
             display: none; position: fixed; inset: 0; background: #020617; z-index: 300; padding: 24px; overflow-y: auto;
         }
         .active-view { display: block !important; animation: slideIn 0.3s cubic-bezier(0.23, 1, 0.32, 1); }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        .modal { 
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 400; align-items: center; justify-content: center; backdrop-filter: blur(15px);
-        }
-        .modal.active { display: flex; animation: fadeIn 0.2s ease; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 400; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
+        .modal.active { display: flex; }
         
-        .fab-add {
-            position: fixed; bottom: 32px; right: 24px;
-            width: 64px; height: 64px; background: #10b981; color: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900;
-            box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4); z-index: 50; transition: all 0.2s;
+        /* フローティングボタン共通 */
+        .fab {
+            position: fixed; bottom: 32px; width: 64px; height: 64px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5); z-index: 100; transition: all 0.2s;
+            border: 2px solid rgba(255,255,255,0.1); cursor: pointer;
         }
-        .fab-add:active { transform: scale(0.9) rotate(90deg); }
 
-        .sync-btn {
-            position: fixed; top: 18px; right: 80px; 
-            padding: 8px 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px;
-            color: #10b981; font-size: 10px; font-weight: bold; z-index: 100; backdrop-filter: blur(8px);
-        }
-        .sync-btn:active { background: #10b981; color: #020617; }
+        .fab-add { right: 24px; background: #10b981; color: white; font-size: 32px; font-weight: 900; }
+        .fab-settings { left: 24px; background: #1e293b; color: #94a3b8; font-size: 24px; }
         
-        /* ぐるぐるローダー */
-        .loader { width: 14px; height: 14px; border: 2px solid #10b981; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        .fab:active { transform: scale(0.9); }
+        .fab-settings:hover { color: #10b981; border-color: #10b981; }
+
+        .header-btn {
+            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px; padding: 6px 14px; font-size: 11px; font-weight: 900; color: #10b981;
+            display: flex; align-items: center; gap: 8px; transition: all 0.2s; cursor: pointer;
+        }
+        .header-btn:active { background: #10b981; color: #020617; }
+
+        .loader { width: 12px; height: 12px; border: 2px solid #10b981; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="p-4 bg-slate-900/90 border-b border-emerald-500/20 flex justify-between items-center backdrop-blur-xl">
+    <header class="p-4 bg-slate-900/95 border-b border-emerald-500/20 flex justify-between items-center backdrop-blur-xl">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
                 <svg class="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
             <div class="flex flex-col">
-                <h1 class="text-sm font-black text-white tracking-tighter italic text-emerald-400">Cloud Orchestrator</h1>
-                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em]">v14.0 nimogram sync</span>
+                <h1 class="text-xs font-black text-white tracking-tighter italic text-emerald-400">Cloud Orchestrator</h1>
+                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em]">v14.4 nimogram</span>
             </div>
         </div>
-        <div class="flex gap-2">
-            <button onclick="openSettings()" class="p-2 text-slate-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
+        
+        <div class="flex items-center gap-3">
+            <button onclick="cloudSync()" class="header-btn">
+                <span id="sync-icon">☁️ SYNC</span>
+                <div id="sync-loader" class="loader"></div>
+            </button>
             <button onclick="clearCanvas()" class="px-3 py-1.5 text-[8px] bg-red-900/10 text-red-500 border border-red-500/20 rounded-full font-bold">RESET</button>
         </div>
     </header>
-
-    <button onclick="cloudSync()" class="sync-btn flex items-center gap-2">
-        <span id="sync-icon">☁️ SYNC</span>
-        <div id="sync-loader" class="loader"></div>
-    </button>
 
     <div id="canvas-container">
         <div id="dynamic-layer" class="w-full h-full relative">
@@ -175,17 +145,25 @@
         </div>
     </div>
 
+    <!-- 左下設定ボタン (移動先) -->
+    <button onclick="openSettings()" class="fab fab-settings" aria-label="Settings">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+    </button>
+
+    <!-- 右下追加ボタン -->
+    <button onclick="openNodeModal()" class="fab fab-add">＋</button>
+
     <!-- Settings View -->
     <div id="settings-view">
         <div class="max-w-md mx-auto">
-            <button onclick="closeSettings()" class="text-slate-400 font-bold mb-10">← Cancel</button>
-            <h2 class="text-2xl font-black mb-8 text-emerald-400">Settings</h2>
+            <button onclick="closeSettings()" class="text-slate-400 font-bold mb-10 flex items-center gap-2">← Back to Dashboard</button>
+            <h2 class="text-2xl font-black mb-8 text-emerald-400 italic">Configuration</h2>
             <div class="space-y-6">
-                <div>
-                    <label class="text-[10px] text-slate-500 font-black uppercase mb-2 block">GAS Web App URL</label>
-                    <input type="text" id="gas-url" class="w-full p-4 bg-slate-900 border border-slate-800 text-white rounded-xl focus:border-emerald-500 outline-none font-mono text-xs" placeholder="https://script.google.com/macros/s/.../exec">
+                <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                    <label class="text-[10px] text-slate-500 font-black uppercase mb-3 block">GAS Web App URL</label>
+                    <input type="text" id="gas-url" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-mono text-xs" placeholder="https://script.google.com/macros/s/.../exec">
                 </div>
-                <button onclick="saveSettings()" class="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black">APPLY CONFIG</button>
+                <button onclick="saveSettings()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-900/40">APPLY & SAVE</button>
             </div>
         </div>
     </div>
@@ -193,46 +171,45 @@
     <!-- Detail View -->
     <div id="detail-view">
         <div class="max-w-md mx-auto h-full flex flex-col pb-10">
-            <button onclick="closeDetail()" class="text-slate-400 font-bold mb-6">← Close</button>
+            <button onclick="closeDetail()" class="text-slate-400 font-bold mb-6">← Back</button>
             <div id="detail-node-label" class="text-2xl font-black text-emerald-400 mb-8 border-l-4 border-emerald-500 pl-4">Variable Name</div>
-            <div class="flex-1 bg-slate-900/50 rounded-3xl border border-slate-800 p-6 mb-6">
-                <textarea id="solution-input" class="w-full h-full bg-transparent text-white outline-none resize-none leading-relaxed text-sm" placeholder="具体的なアクションプランを入力..."></textarea>
+            <div class="flex-1 bg-slate-900/50 rounded-3xl border border-slate-800 p-6 mb-8 shadow-inner">
+                <textarea id="solution-input" class="w-full h-full bg-transparent text-white outline-none resize-none leading-relaxed text-sm font-medium" placeholder="アクションプランを入力..."></textarea>
             </div>
-            <div class="flex flex-col gap-3">
-                <button onclick="saveSolution()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black shadow-lg">SAVE TO LOCAL</button>
-                <button onclick="deleteCurrentNode()" class="text-xs text-red-500 font-bold opacity-50 hover:opacity-100 transition">DELETE THIS ELEMENT</button>
+            <div class="flex flex-col gap-4">
+                <button onclick="saveSolution()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black shadow-lg">SAVE DATA</button>
+                <button onclick="deleteCurrentNode()" class="w-full py-4 text-xs text-red-500 font-bold bg-red-950/10 border border-red-900/20 rounded-2xl uppercase tracking-widest">Delete Element</button>
             </div>
         </div>
     </div>
 
-    <button id="main-fab" onclick="openNodeModal()" class="fab-add">＋</button>
-
-    <div id="bottom-nav" class="fixed bottom-0 left-0 w-full p-6 pr-24 flex items-center pointer-events-none">
-        <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-6 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px] shadow-2xl backdrop-blur-md">極性切替</button>
+    <!-- Bottom Nav -->
+    <div id="bottom-nav" class="fixed bottom-0 left-0 w-full p-10 px-24 flex items-center justify-center pointer-events-none">
+        <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px] shadow-2xl backdrop-blur-md">極性切替</button>
     </div>
 
     <!-- Modals -->
     <div id="node-modal" class="modal p-6">
-        <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm">
-            <h2 class="text-lg font-black mb-1 text-white text-center uppercase italic">Add Element</h2>
-            <input type="text" id="node-input" class="w-full p-4 bg-slate-800/50 border border-slate-700 text-white rounded-xl mb-6 focus:border-emerald-500 outline-none font-bold text-center text-lg" placeholder="...">
+        <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl">
+            <h2 class="text-lg font-black mb-1 text-white text-center italic text-emerald-400">Feed Data</h2>
+            <input type="text" id="node-input" class="w-full p-4 bg-slate-800/50 border border-slate-700 text-white rounded-xl mb-6 focus:border-emerald-500 outline-none font-bold text-center text-lg shadow-inner" placeholder="...">
             <div class="flex gap-3">
-                <button onclick="closeNodeModal()" class="flex-1 py-4 text-slate-500 font-bold">CANCEL</button>
-                <button onclick="addNode()" class="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black">ENGAGE</button>
+                <button onclick="closeNodeModal()" class="flex-1 py-4 text-slate-500 font-bold text-xs">CANCEL</button>
+                <button onclick="addNode()" class="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black uppercase">Engage</button>
             </div>
         </div>
     </div>
 
     <div id="conn-modal" class="modal p-6">
-        <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm text-center">
-            <h2 class="text-md font-black mb-6 text-white uppercase italic">極性を反転</h2>
+        <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm text-center shadow-2xl">
+            <h2 class="text-md font-black mb-6 text-white uppercase italic text-emerald-400">因果の極性</h2>
             <div class="grid grid-cols-2 gap-4">
                 <button onclick="completeConnection('S')" class="p-6 bg-emerald-950/20 border border-emerald-500/20 rounded-2xl">
                     <div class="text-4xl font-black text-emerald-500 mb-1">S</div>
                     <div class="text-[8px] text-emerald-400 font-bold uppercase tracking-widest">Reinforce</div>
                 </button>
-                <button onclick="completeConnection('O')" class="p-6 bg-red-950/20 border-2 border-red-500/20 rounded-2xl transition-all group">
-                    <div class="text-4xl font-black text-red-500 mb-2 group-hover:scale-110 transition">O</div>
+                <button onclick="completeConnection('O')" class="p-6 bg-red-950/20 border border-red-500/20 rounded-2xl">
+                    <div class="text-4xl font-black text-red-500 mb-2">O</div>
                     <div class="text-[8px] text-red-400 font-bold uppercase tracking-widest">Balance</div>
                 </button>
             </div>
@@ -256,12 +233,14 @@
         const orbitPath = document.getElementById('orbit-path');
 
         window.onload = () => {
-            const saved = localStorage.getItem('system_loops_v14');
+            const saved = localStorage.getItem('system_loops_v14_4');
             if (saved) {
-                const data = JSON.parse(saved);
-                nodes = data.nodes || [];
-                connections = data.connections || [];
-                solutions = data.solutions || {};
+                try {
+                    const data = JSON.parse(saved);
+                    nodes = data.nodes || [];
+                    connections = data.connections || [];
+                    solutions = data.solutions || {};
+                } catch(e) { console.error("Restore failed", e); }
             }
             document.getElementById('gas-url').value = gasUrl;
             updateOrbitUI();
@@ -276,9 +255,11 @@
             const centerX = window.innerWidth / 2;
             const centerY = (window.innerHeight - 80) / 2;
             const radius = Math.min(window.innerWidth, window.innerHeight - 80) * 0.38;
-            orbitPath.setAttribute("cx", centerX);
-            orbitPath.setAttribute("cy", centerY);
-            orbitPath.setAttribute("r", radius);
+            if (orbitPath) {
+                orbitPath.setAttribute("cx", centerX);
+                orbitPath.setAttribute("cy", centerY);
+                orbitPath.setAttribute("r", radius);
+            }
         }
 
         function animate() {
@@ -314,54 +295,28 @@
             connections = newConnections;
         }
 
-        /* ---------------- GAS Integration ---------------- */
         async function cloudSync() {
-            if (!gasUrl) { alert("SettingsからGASのURLを設定してください"); return; }
-            
+            if (!gasUrl) { alert("左下の歯車からURLを設定してください"); return; }
             const icon = document.getElementById('sync-icon');
             const loader = document.getElementById('sync-loader');
-            icon.style.display = 'none';
-            loader.style.display = 'block';
+            icon.style.display = 'none'; loader.style.display = 'block';
 
             try {
-                // 保存
-                const res = await fetch(gasUrl, {
-                    method: 'POST',
-                    body: JSON.stringify({ nodes, connections, solutions })
-                });
-                
-                // 取得（同期）
+                await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ nodes, connections, solutions }) });
                 const getRes = await fetch(gasUrl);
                 const cloudData = await getRes.json();
-                
                 if (cloudData.nodes) {
-                    nodes = cloudData.nodes;
-                    connections = cloudData.connections;
-                    solutions = cloudData.solutions;
-                    distributeNodes();
-                    render();
-                    localStorage.setItem('system_loops_v14', JSON.stringify(cloudData));
+                    nodes = cloudData.nodes; connections = cloudData.connections; solutions = cloudData.solutions;
+                    distributeNodes(); render(); syncLocal();
+                    alert("クラウド同期が完了しました。");
                 }
-                alert("クラウド同期が完了しました");
-            } catch (e) {
-                console.error(e);
-                alert("通信エラーが発生しました。URLを確認してください。");
-            } finally {
-                icon.style.display = 'block';
-                loader.style.display = 'none';
-            }
+            } catch (e) { alert("同期エラー：URLを確認してください。"); } finally { icon.style.display = 'block'; loader.style.display = 'none'; }
         }
 
         function openSettings() { document.getElementById('settings-view').classList.add('active-view'); }
         function closeSettings() { document.getElementById('settings-view').classList.remove('active-view'); }
-        function saveSettings() {
-            gasUrl = document.getElementById('gas-url').value;
-            localStorage.setItem('gas_url', gasUrl);
-            alert("URLを保存しました");
-            closeSettings();
-        }
+        function saveSettings() { gasUrl = document.getElementById('gas-url').value; localStorage.setItem('gas_url', gasUrl); alert("保存しました"); closeSettings(); }
 
-        /* ---------------- Core UI Logic ---------------- */
         function openNodeModal(insertAt = -1) {
             pendingInsertIndex = insertAt;
             document.getElementById('node-modal').classList.add('active');
@@ -371,18 +326,14 @@
         function addNode() {
             const label = document.getElementById('node-input').value;
             if (!label) return;
-            const newNode = { id: Date.now(), label, baseAngle: Math.PI / 2 };
-            if (pendingInsertIndex === -1) nodes.push(newNode);
-            else nodes.splice(pendingInsertIndex + 1, 0, newNode);
+            nodes.push({ id: Date.now(), label, baseAngle: Math.PI / 2 });
             distributeNodes(); closeNodeModal(); render();
         }
 
         function toggleConnectMode() {
             isConnectMode = !isConnectMode;
             const btn = document.getElementById('connect-btn');
-            btn.className = isConnectMode ? 
-                "pointer-events-auto px-6 py-3 bg-amber-500 text-slate-950 rounded-xl font-black text-[10px] shadow-xl" :
-                "pointer-events-auto px-6 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px] shadow-xl backdrop-blur-md";
+            btn.className = isConnectMode ? "pointer-events-auto px-8 py-3 bg-amber-500 text-slate-950 rounded-xl font-black text-[10px] shadow-xl" : "pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px] shadow-xl backdrop-blur-md";
             btn.innerText = isConnectMode ? 'ターゲットを選択...' : '極性切替';
             if (!isConnectMode) selectedNodeId = null;
             render();
@@ -390,27 +341,21 @@
 
         function handleNodeClick(id) {
             if (isConnectMode) {
-                if (selectedNodeId === null) { selectedNodeId = id; document.getElementById('connect-btn').innerText = '次の要素を選択'; }
+                if (selectedNodeId === null) { selectedNodeId = id; document.getElementById('connect-btn').innerText = '次を選択'; }
                 else if (selectedNodeId !== id) { tempTargetId = id; document.getElementById('conn-modal').classList.add('active'); }
                 render();
             } else { openDetail(id); }
         }
 
         function openDetail(id) {
-            const node = nodes.find(n => n.id === id);
-            if (!node) return;
+            const node = nodes.find(n => n.id === id); if (!node) return;
             currentDetailNodeId = id;
             document.getElementById('detail-node-label').innerText = node.label;
             document.getElementById('solution-input').value = solutions[id] || "";
             document.getElementById('detail-view').classList.add('active-view');
         }
         function closeDetail() { document.getElementById('detail-view').classList.remove('active-view'); render(); }
-        function saveSolution() {
-            if (currentDetailNodeId) {
-                solutions[currentDetailNodeId] = document.getElementById('solution-input').value;
-                syncLocal(); closeDetail();
-            }
-        }
+        function saveSolution() { if (currentDetailNodeId) { solutions[currentDetailNodeId] = document.getElementById('solution-input').value; syncLocal(); closeDetail(); } }
         function deleteCurrentNode() {
             if (confirm("要素を削除しますか？")) {
                 nodes = nodes.filter(n => n.id !== currentDetailNodeId);
@@ -420,7 +365,6 @@
             }
         }
 
-        let tempTargetId = null;
         function completeConnection(type) {
             const conn = connections.find(c => c.source === selectedNodeId && c.target === tempTargetId);
             if (conn) conn.type = type;
@@ -438,47 +382,47 @@
 
         function render() {
             const currentIds = nodes.map(n => n.id.toString());
-            document.querySelectorAll('.node, .add-between-btn, .solution-cloud').forEach(el => {
-                if (el.classList.contains('node') && !currentIds.includes(el.dataset.id)) el.remove();
-                if (!el.classList.contains('node')) el.remove();
+            document.querySelectorAll('.node, .solution-cloud').forEach(el => {
+                if (!currentIds.includes(el.dataset.id)) el.remove();
             });
+            document.querySelectorAll('.add-between-btn').forEach(el => el.remove());
 
-            const nodeData = nodes.map(node => ({
-                id: node.id, label: node.label, pos: getRotatedPos(node), solution: solutions[node.id] || ""
-            }));
-
-            nodeData.forEach(data => {
-                let div = document.querySelector(`.node[data-id="${data.id}"]`);
+            nodes.forEach(node => {
+                const pos = getRotatedPos(node);
+                let div = document.querySelector(`.node[data-id="${node.id}"]`);
                 if (!div) {
-                    div = document.createElement('div'); div.className = 'node'; div.dataset.id = data.id;
-                    div.addEventListener('click', () => handleNodeClick(data.id));
+                    div = document.createElement('div'); div.className = 'node'; div.dataset.id = node.id;
+                    div.addEventListener('click', () => handleNodeClick(node.id));
                     dynamicLayer.appendChild(div);
                 }
-                div.style.left = data.pos.x + 'px'; div.style.top = data.pos.y + 'px';
-                div.textContent = data.label;
-                div.classList.toggle('selected', selectedNodeId === data.id);
+                div.style.left = pos.x + 'px'; div.style.top = pos.y + 'px';
+                div.textContent = node.label;
+                div.classList.toggle('selected', selectedNodeId === node.id);
 
-                if (data.solution && !isConnectMode) {
-                    const cloudPos = getRotatedPos(nodes.find(n => n.id === data.id), 65);
-                    const cloud = document.createElement('div'); cloud.className = 'solution-cloud';
+                if (solutions[node.id] && !isConnectMode) {
+                    const cloudPos = getRotatedPos(node, 65);
+                    let cloud = document.querySelector(`.solution-cloud[data-id="${node.id}"]`);
+                    if (!cloud) {
+                        cloud = document.createElement('div'); cloud.className = 'solution-cloud'; cloud.dataset.id = node.id;
+                        cloud.onclick = (e) => { e.stopPropagation(); openDetail(node.id); };
+                        dynamicLayer.appendChild(cloud);
+                    }
                     cloud.style.left = cloudPos.x + 'px'; cloud.style.top = cloudPos.y + 'px';
-                    cloud.textContent = data.solution;
-                    cloud.onclick = () => openDetail(data.id);
-                    dynamicLayer.appendChild(cloud);
+                    cloud.textContent = solutions[node.id];
+                } else {
+                    const cloud = document.querySelector(`.solution-cloud[data-id="${node.id}"]`);
+                    if (cloud) cloud.remove();
                 }
             });
 
             while (svg.lastChild && svg.lastChild.nodeName !== 'defs' && svg.lastChild.id !== 'orbit-path') svg.removeChild(svg.lastChild);
-
-            const centerX = window.innerWidth / 2;
-            const centerY = (window.innerHeight - 80) / 2;
+            const centerX = window.innerWidth / 2, centerY = (window.innerHeight - 80) / 2;
             const radius = Math.min(window.innerWidth, window.innerHeight - 80) * 0.38;
 
             connections.forEach((conn, index) => {
-                const sData = nodeData.find(d => d.id === conn.source);
-                const tData = nodeData.find(d => d.id === conn.target);
-                if (!sData || !tData) return;
-                const s = sData.pos; const t = tData.pos;
+                const sNode = nodes.find(n => n.id === conn.source), tNode = nodes.find(n => n.id === conn.target);
+                if (!sNode || !tNode) return;
+                const s = getRotatedPos(sNode), t = getRotatedPos(tNode);
                 let diff = (t.angle - s.angle) % (2 * Math.PI); if (diff < 0) diff += 2 * Math.PI;
                 const largeArc = diff > Math.PI ? 1 : 0;
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -487,9 +431,9 @@
                 path.setAttribute("stroke", conn.type === 'S' ? '#10b981' : '#f43f5e');
                 path.setAttribute("marker-end", conn.type === 'S' ? "url(#arrowhead)" : "url(#arrowhead-red)");
                 svg.appendChild(path);
+                
                 const midAngle = s.angle + diff / 2;
-                const labelX = centerX + (radius + 28) * Math.cos(midAngle);
-                const labelY = centerY + (radius + 28) * Math.sin(midAngle);
+                const labelX = centerX + (radius + 28) * Math.cos(midAngle), labelY = centerY + (radius + 28) * Math.sin(midAngle);
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 text.setAttribute("x", labelX); text.setAttribute("y", labelY);
                 text.setAttribute("class", conn.type === 'S' ? 'label-s' : 'label-o');
@@ -498,17 +442,29 @@
 
                 if (!isConnectMode) {
                     const btn = document.createElement('div'); btn.className = 'add-between-btn'; btn.innerHTML = '＋';
-                    const btnX = centerX + radius * Math.cos(midAngle); const btnY = centerY + radius * Math.sin(midAngle);
+                    const btnX = centerX + radius * Math.cos(midAngle), btnY = centerY + radius * Math.sin(midAngle);
                     btn.style.left = btnX + 'px'; btn.style.top = btnY + 'px';
                     btn.onclick = (e) => { e.stopPropagation(); openNodeModal(index); };
                     dynamicLayer.appendChild(btn);
                 }
             });
+
+            if (!isConnectMode) {
+                nodes.forEach(node => {
+                    if (solutions[node.id]) {
+                        const nPos = getRotatedPos(node), cPos = getRotatedPos(node, 65);
+                        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        line.setAttribute("x1", nPos.x); line.setAttribute("y1", nPos.y);
+                        line.setAttribute("x2", cPos.x); line.setAttribute("y2", cPos.y);
+                        line.setAttribute("class", "solution-line"); svg.appendChild(line);
+                    }
+                });
+            }
             syncLocal();
         }
 
-        function syncLocal() { localStorage.setItem('system_loops_v14', JSON.stringify({nodes, connections, solutions})); }
-        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v14'); nodes=[]; connections=[]; solutions={}; render(); } }
+        function syncLocal() { localStorage.setItem('system_loops_v14_4', JSON.stringify({nodes, connections, solutions})); }
+        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v14_4'); nodes=[]; connections=[]; solutions={}; render(); } }
     </script>
 </body>
 </html>
