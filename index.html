@@ -3,54 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Loop Creator - Power Sync v17.5</title>
+    <title>System Loop Creator - Monochromatic v19.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        :root {
+            --track-color: #10b981;
+            --track-label-color: #bef264;
+        }
+
         body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
-        #canvas-container { position: relative; width: 100vw; height: calc(100vh - 114px); overflow: hidden; background: radial-gradient(circle at center, #0f172a 0%, #020617 100%); z-index: 1; }
-        header { position: relative; z-index: 100; height: 60px; }
-        #hint-banner { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(16, 185, 129, 0.1); padding: 10px 28px; height: 54px; display: flex; align-items: center; justify-content: center; z-index: 90; }
-        #hint-text { font-size: 13px; font-weight: 700; color: #fde047; line-height: 1.5; text-align: center; }
-        .node { position: absolute; padding: 10px 18px; background: rgba(15, 23, 42, 0.95); border: 2px solid #10b981; border-radius: 9999px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); user-select: none; z-index: 30; min-width: 100px; text-align: center; font-weight: 700; color: #fff; transform: translate(-50%, -50%); font-size: 12px; cursor: grab; transition: left 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
-        .node:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.1); transition: none; }
-        .node.dragging { border-color: #fde047; transition: none; }
-        .solution-cloud { position: absolute; padding: 8px 14px; background: rgba(253, 224, 71, 0.05); border: 1px dashed #fde047; border-radius: 20px; color: #fef08a; font-size: 10px; max-width: 120px; text-align: center; z-index: 25; transform: translate(-50%, -50%); backdrop-filter: blur(4px); animation: floatCloud 6s ease-in-out infinite; cursor: pointer; transition: left 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
-        @keyframes floatCloud { 0%, 100% { margin-top: -2px; } 50% { margin-top: 2px; } }
+        
+        #canvas-container { 
+            position: relative; 
+            width: 100vw; 
+            height: calc(100vh - 114px); 
+            overflow: hidden; 
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%); 
+            z-index: 1; 
+        }
+
+        header { position: relative; z-index: 100; height: 60px; background-color: #0f172a; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        #hint-banner { 
+            background: rgba(15, 23, 42, 0.95); 
+            padding: 10px 28px; 
+            height: 54px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 90; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        
+        #hint-text { font-size: 13px; font-weight: 700; color: var(--track-color); opacity: 0.8; line-height: 1.5; text-align: center; transition: color 0.5s; }
+
+        .node { 
+            position: absolute; 
+            padding: 12px 20px; 
+            background: rgba(15, 23, 42, 0.98); 
+            border: 2px solid var(--track-color); 
+            border-radius: 9999px; 
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); 
+            user-select: none; 
+            z-index: 30; 
+            min-width: 110px; 
+            text-align: center; 
+            font-weight: 800; 
+            color: #fff; 
+            transform: translate(-50%, -50%); 
+            font-size: 13px; 
+            cursor: grab; 
+            transition: border-color 0.5s;
+        }
+        .node.dragging { border-color: #fff !important; box-shadow: 0 0 30px rgba(255, 255, 255, 0.2); }
+
+        .insert-btn {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: var(--track-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #020617;
+            font-weight: 900;
+            font-size: 16px;
+            z-index: 40;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transition: background 0.5s;
+        }
+
+        .solution-cloud { 
+            position: absolute; 
+            padding: 8px 14px; 
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px dashed var(--track-color); 
+            border-radius: 24px; 
+            color: #fff; 
+            font-size: 10px; 
+            max-width: 130px; 
+            text-align: center; 
+            z-index: 25; 
+            transform: translate(-50%, -50%); 
+            animation: floatCloud 6s ease-in-out infinite; 
+            cursor: pointer; 
+        }
+        @keyframes floatCloud { 0%, 100% { margin-top: -3px; } 50% { margin-top: 3px; } }
+
         svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .flow-line { fill: none; stroke-width: 3; stroke-dasharray: 12, 6; animation: flow 0.6s linear infinite; }
-        @keyframes flow { from { stroke-dashoffset: 36; } to { stroke-dashoffset: 0; } }
-        .label-s { fill: #10b981; font-weight: 900; font-size: 14px; }
-        .label-o { fill: #f43f5e; font-weight: 900; font-size: 14px; }
+        
+        .flow-line { 
+            fill: none; 
+            stroke-width: 3.5; 
+            stroke-linecap: round;
+            stroke-dasharray: 8, 6; 
+        }
+
+        .label-s { fill: var(--track-label-color); font-weight: 900; font-size: 16px; filter: drop-shadow(0 0 4px #000); }
+        .label-o { fill: #f87171; font-weight: 900; font-size: 16px; filter: drop-shadow(0 0 4px #000); }
+
+        #pager-dots {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 150;
+            pointer-events: none;
+        }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.1); transition: all 0.3s; }
+        .dot.active { background: var(--track-color); transform: scale(1.3); box-shadow: 0 0 8px var(--track-color); }
+
+        /* ヘッダーボタン：シンプルに統一 */
+        .header-btn { 
+            background: transparent; 
+            border: 1px solid var(--track-color); 
+            border-radius: 8px; 
+            padding: 6px 14px; 
+            font-size: 10px; 
+            font-weight: 800; 
+            color: var(--track-color); 
+            cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .header-btn:active { transform: scale(0.95); opacity: 0.7; }
+        .header-btn.active-mode {
+            background: var(--track-color);
+            color: #020617;
+        }
+
         .view-modal { display: none; position: fixed; inset: 0; background: #020617; z-index: 300; padding: 24px; overflow-y: auto; }
         .active-view { display: block !important; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 400; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.9); 
+            z-index: 400; 
+            align-items: center; 
+            justify-content: center; 
+            backdrop-filter: blur(15px); 
+        }
         .modal.active { display: flex; }
-        .fab { position: fixed; bottom: 32px; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 30px rgba(0,0,0,0.5); z-index: 100; transition: all 0.2s; border: 2px solid rgba(255,255,255,0.1); cursor: pointer; }
-        .fab-add { right: 24px; background: #10b981; color: white; font-size: 32px; font-weight: 900; }
-        .fab-settings { left: 24px; background: #1e293b; color: #94a3b8; }
-        .header-btn { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 6px 14px; font-size: 11px; font-weight: 900; color: #10b981; cursor: pointer; }
-        #toast-container { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 500; pointer-events: none; }
-        .toast { background: #10b981; color: #020617; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 13px; margin-bottom: 10px; animation: toastIn 0.3s ease-out; }
-        @keyframes toastIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .cloud-item { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; border-radius: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .modal-content {
+            background: #0f172a;
+            border: 2px solid var(--track-color);
+            border-radius: 28px;
+            padding: 32px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .fab { position: fixed; bottom: 32px; width: 68px; height: 68px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 100; cursor: pointer; }
+        .fab-add { right: 24px; background: var(--track-color); color: #020617; font-size: 36px; font-weight: 900; transition: background 0.5s; }
+        .fab-settings { left: 24px; background: #1e293b; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); }
+
+        #toast-container { position: fixed; top: 75px; left: 50%; transform: translateX(-50%); z-index: 500; pointer-events: none; }
+        .toast { background: var(--track-color); color: #020617; padding: 14px 28px; border-radius: 14px; font-weight: 900; font-size: 14px; margin-bottom: 10px; animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes toastIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        textarea, input { background: #0f172a !important; border: 2px solid rgba(255,255,255,0.1) !important; border-radius: 16px !important; padding: 16px !important; color: white !important; outline: none; width: 100%; font-weight: 600; }
+        textarea:focus, input:focus { border-color: var(--track-color) !important; }
     </style>
 </head>
 <body>
-    <header class="p-4 bg-slate-900/95 flex justify-between items-center backdrop-blur-xl">
+    <header class="p-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center">
+            <div id="header-icon" class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-colors duration-500">
                 <svg class="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
             <div class="flex flex-col">
-                <h1 class="text-xs font-black text-white italic text-emerald-400 leading-none">Cloud Orchestrator</h1>
-                <span class="text-[7px] text-slate-500 font-black uppercase mt-1 tracking-widest">v17.5 Power Sync</span>
+                <h1 id="track-title" class="text-[12px] font-black italic tracking-tight leading-none">Track 1</h1>
+                <span class="text-[7px] text-slate-500 font-bold uppercase mt-1 tracking-widest opacity-60">System Orchestrator</span>
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <button onclick="alignOrbit(true)" class="header-btn text-amber-400 border-amber-500/30">🎯 ALIGN</button>
-            <button onclick="toggleRotation()" id="rotation-toggle" class="header-btn">⏸ STOP</button>
-            <button onclick="openCloudManager()" class="header-btn">☁️ SYNC</button>
-            <button onclick="clearCanvas()" class="px-2 py-1.5 text-[8px] text-red-500 font-bold">RESET</button>
+            <button onclick="alignOrbit(true)" class="header-btn">Align</button>
+            <button onclick="toggleRotation()" id="rotation-toggle" class="header-btn">Stop</button>
+            <button onclick="openCloudManager()" class="header-btn">Sync</button>
         </div>
     </header>
 
@@ -60,71 +197,115 @@
     <div id="canvas-container">
         <div id="dynamic-layer" class="w-full h-full relative">
             <svg id="svg-layer">
-                <defs>
-                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#10b981"/></marker>
-                    <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#f43f5e"/></marker>
+                <defs id="svg-defs">
+                    <marker id="arrowhead-s" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="currentColor"/></marker>
+                    <marker id="arrowhead-o" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#f43f5e"/></marker>
                 </defs>
             </svg>
         </div>
     </div>
 
+    <div id="pager-dots"></div>
+
+    <!-- Cloud Manager -->
     <div id="cloud-view" class="view-modal">
         <div class="max-w-md mx-auto">
-            <button onclick="closeCloudManager()" class="text-slate-400 font-bold mb-8 flex items-center gap-2">← Back</button>
-            <h2 class="text-2xl font-black mb-8 text-emerald-400">Cloud Manager</h2>
-            <div class="mb-10 bg-slate-900/50 p-6 rounded-2xl border border-emerald-500/20">
-                <div class="flex flex-col gap-3">
-                    <input type="text" id="save-title" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-bold" placeholder="プロジェクト名...">
-                    <button id="save-btn" onclick="saveToCloud()" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-xs">SAVE PROJECT</button>
+            <button onclick="closeCloudManager()" class="text-slate-400 font-bold mb-8 py-2 px-4 bg-slate-800 rounded-xl">← Back</button>
+            <h2 id="cloud-heading" class="text-3xl font-black mb-8 italic">Cloud Sync</h2>
+            <div class="mb-10 bg-slate-900 p-8 rounded-3xl border border-white/5">
+                <div class="flex flex-col gap-5">
+                    <input type="text" id="save-title" placeholder="Project Name...">
+                    <button id="save-btn" onclick="saveToCloud()" class="w-full py-5 bg-white text-slate-900 rounded-2xl font-black text-lg transition-colors">SAVE TRACK</button>
                 </div>
             </div>
-            <h3 class="text-[10px] text-slate-500 font-black uppercase mb-4 tracking-widest">Stored Projects</h3>
-            <div id="cloud-list" class="space-y-3">
-                <div class="text-center py-10 text-slate-600 text-xs italic">SYNCボタンでデータを更新してください</div>
-            </div>
+            <div id="cloud-list" class="space-y-4"></div>
         </div>
     </div>
 
-    <button onclick="openSettings()" class="fab fab-settings"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg></button>
-    <button onclick="openNodeModal()" class="fab fab-add">＋</button>
-
-    <div id="detail-view" class="view-modal">
-        <div class="max-w-md mx-auto h-full flex flex-col">
-            <button onclick="closeDetail()" class="text-slate-400 font-bold mb-6">← Back</button>
-            <div id="detail-node-label" class="text-2xl font-black text-emerald-400 mb-8 border-l-4 border-emerald-500 pl-4">Variable</div>
-            <textarea id="solution-input" class="flex-1 bg-slate-900/50 rounded-3xl border border-slate-800 p-6 mb-8 text-white outline-none resize-none" placeholder="アクションプラン..."></textarea>
-            <div class="flex flex-col gap-4 mb-10">
-                <button onclick="saveSolution()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black">SAVE DATA</button>
-                <button onclick="deleteCurrentNode()" class="w-full py-4 text-xs text-red-500 font-bold">Delete</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Settings -->
     <div id="settings-view" class="view-modal">
         <div class="max-w-md mx-auto">
-            <button onclick="closeSettings()" class="text-slate-400 font-bold mb-10">← Back</button>
-            <h2 class="text-2xl font-black mb-8 text-emerald-400 italic">Configuration</h2>
-            <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 mb-6">
-                <input type="text" id="gas-url-input" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-mono text-xs">
+            <button onclick="closeSettings()" class="text-slate-400 font-bold mb-10 py-2 px-4 bg-slate-800 rounded-xl">← Back</button>
+            <h2 id="settings-heading" class="text-3xl font-black mb-8 italic text-white">Settings</h2>
+            <div class="bg-slate-900 p-8 rounded-3xl border border-white/5 mb-8">
+                <label class="text-[10px] text-slate-500 font-bold mb-2 block">TRACK NAME</label>
+                <input type="text" id="track-name-input" class="text-xs mb-6" placeholder="Track 1">
+                <button onclick="updateTrackName()" class="w-full py-4 bg-white text-slate-900 rounded-xl font-black mb-8">RENAME</button>
+                
+                <hr class="border-white/5 mb-8">
+                <button onclick="shuffleTrackColor()" class="w-full py-4 bg-slate-800 text-white border border-white/5 rounded-xl font-bold mb-8">SHUFFLE THEME</button>
+                
+                <h3 class="text-red-500 text-xs font-black uppercase mb-4 tracking-widest">⚠️ Danger Zone</h3>
+                <button onclick="openConfirmReset()" class="w-full py-4 bg-red-900/10 text-red-500 border border-red-500/20 rounded-xl font-black text-xs">RESET TRACK</button>
             </div>
-            <button onclick="saveSettings()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black">APPLY</button>
         </div>
     </div>
 
+    <!-- Reset Confirmation -->
+    <div id="confirm-reset-modal" class="modal">
+        <div class="modal-content border-red-500">
+            <h2 class="text-red-500 font-black mb-6 text-center italic text-xl">Confirm Reset</h2>
+            <p class="text-slate-400 text-xs mb-8 text-center leading-relaxed">このトラックのデータを全て消去します。</p>
+            <div class="flex gap-4">
+                <button onclick="closeConfirmReset()" class="flex-1 py-3 text-slate-500 font-bold">CANCEL</button>
+                <button onclick="clearCanvas()" class="flex-2 py-3 bg-red-600 text-white rounded-xl font-black">RESET</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail View -->
+    <div id="detail-view" class="view-modal">
+        <div class="max-w-md mx-auto h-full flex flex-col">
+            <button onclick="closeDetail()" class="text-slate-400 font-bold mb-6 py-2 px-4 bg-slate-800 rounded-xl">← Back</button>
+            <div id="detail-node-label" class="text-3xl font-black mb-8 border-l-4 pl-5 italic transition-colors">Variable</div>
+            <textarea id="solution-input" class="flex-1 mb-8 text-lg" placeholder="Action Plan..."></textarea>
+            <div class="flex flex-col gap-5 mb-12">
+                <button onclick="saveSolution()" class="w-full py-6 bg-white text-slate-900 rounded-2xl font-black text-xl">COMMIT</button>
+                <button onclick="deleteCurrentNode()" class="w-full py-4 text-sm text-red-500 font-black uppercase tracking-widest">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Node Modal -->
+    <div id="node-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="inject-heading" class="font-black mb-8 text-center text-xl italic">Inject Variable</h2>
+            <input type="text" id="node-label-input" class="mb-8 text-center text-xl font-bold" placeholder="...">
+            <div class="flex gap-4">
+                <button onclick="closeNodeModal()" class="flex-1 py-4 text-slate-500 font-bold">CANCEL</button>
+                <button id="inject-btn" onclick="addNode()" class="flex-2 py-4 bg-white text-slate-900 rounded-2xl font-black text-lg">INJECT</button>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="openSettings()" class="fab fab-settings"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg></button>
+    <button onclick="openNodeModal(null)" class="fab fab-add">＋</button>
+
     <div id="bottom-nav" class="fixed bottom-0 left-0 w-full p-10 px-24 flex items-center justify-center pointer-events-none">
-        <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px]">極性切替</button>
+        <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-10 py-4 bg-slate-900 text-slate-300 border border-white/10 rounded-2xl font-black text-xs shadow-2xl backdrop-blur-xl">POLARITY SWAP</button>
     </div>
 
     <script>
+        const colorPool = [
+            { main: "#10b981", label: "#bef264" }, // Emerald
+            { main: "#06b6d4", label: "#a5f3fc" }, // Cyan
+            { main: "#8b5cf6", label: "#ddd6fe" }, // Purple
+            { main: "#f59e0b", label: "#fef3c7" }, // Amber
+            { main: "#ec4899", label: "#fbcfe8" }, // Pink
+            { main: "#3b82f6", label: "#bfdbfe" }, // Blue
+            { main: "#6366f1", label: "#c7d2fe" }, // Indigo
+            { main: "#14b8a6", label: "#99f6e4" }, // Teal
+            { main: "#f97316", label: "#ffedd5" }  // Orange
+        ];
+
         const hintsList = [
-            { text: "「同じ問題が形を変えて何度も起きる」時、そこには必ず隠れたループがある。" },
-            { text: "犯人（人）を探すのをやめ、行動を強制している「構造（ループ）」を探す。" },
+            { text: "同じ問題が形を変えて何度も起きる時、そこには必ず隠れたループがある。" },
+            { text: "人を探すのをやめ、行動を強制している構造（ループ）を探す。" },
             { text: "レバレッジポイントは、常に直感に反する場所にある。" }
         ];
 
-        let nodes = [];
-        let connections = [];
-        let solutions = {};
+        let tracks = [];
+        let currentTrackIndex = 0;
         let isConnectMode = false;
         let selectedNodeId = null;
         let isRotating = true;
@@ -132,37 +313,146 @@
         let currentDetailNodeId = null;
         let dragTargetId = null;
         let cloudProjectCache = [];
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyo1o9FAANNVckA2HFtsxiC8PjOjytLCzTGs0bVuAZqYoLrMcxxckUO27uzJM38gi_6Gg/exec";
-        let gasUrl = localStorage.getItem('gas_url') || DEFAULT_GAS_URL;
+        let insertionContextId = null;
+        let touchStartX = 0;
 
         const dynamicLayer = document.getElementById('dynamic-layer');
         const svg = document.getElementById('svg-layer');
+        const defs = document.getElementById('svg-defs');
 
         window.onload = () => {
-            const saved = localStorage.getItem('system_loops_v17_5');
+            const saved = localStorage.getItem('system_loops_v19_7_multi');
             if (saved) {
                 try {
-                    const data = JSON.parse(saved);
-                    nodes = data.nodes || [];
-                    connections = data.connections || [];
-                    solutions = data.solutions || {};
-                } catch(e) { console.error(e); }
+                    tracks = JSON.parse(saved);
+                    tracks.forEach(t => { if(!t.colorPair) t.colorPair = colorPool[Math.floor(Math.random() * colorPool.length)]; });
+                } catch(e) { tracks = []; }
             }
-            document.getElementById('gas-url-input').value = gasUrl;
-            distributeNodes();
-            render();
+            if (tracks.length === 0) tracks = [createNewTrack('Track 1')];
+            renderPager();
+            syncViewWithTrack();
             displayRandomHint();
             setInterval(displayRandomHint, 8000);
             window.addEventListener('pointermove', handlePointerMove);
             window.addEventListener('pointerup', handlePointerUp);
+            
+            document.getElementById('canvas-container').addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+            document.getElementById('canvas-container').addEventListener('touchend', e => {
+                const diff = e.changedTouches[0].clientX - touchStartX;
+                if (Math.abs(diff) > 80) {
+                    if (diff > 0) switchTrack(currentTrackIndex - 1);
+                    else switchTrack(currentTrackIndex + 1);
+                }
+            });
             requestAnimationFrame(animate);
         };
+
+        function createNewTrack(name) {
+            return {
+                id: Date.now() + Math.random(),
+                name: name,
+                nodes: [],
+                connections: [],
+                solutions: {},
+                colorPair: colorPool[Math.floor(Math.random() * colorPool.length)]
+            };
+        }
+
+        function switchTrack(index) {
+            if (index < 0) return;
+            if (index >= tracks.length) {
+                if (tracks.length < 10) {
+                    tracks.push(createNewTrack(`Track ${tracks.length + 1}`));
+                    showToast("NEW TRACK");
+                } else return;
+            }
+            currentTrackIndex = index;
+            rotationAngle = 0;
+            syncViewWithTrack();
+            renderPager();
+            syncLocal();
+        }
+
+        function syncViewWithTrack() {
+            const track = tracks[currentTrackIndex];
+            const color = track.colorPair;
+            
+            document.documentElement.style.setProperty('--track-color', color.main);
+            document.documentElement.style.setProperty('--track-label-color', color.label);
+            
+            document.getElementById('track-title').innerText = track.name;
+            document.getElementById('track-title').style.color = color.main;
+            document.getElementById('header-icon').style.backgroundColor = color.main;
+            document.getElementById('track-name-input').value = track.name;
+            
+            // Modal headings
+            ['cloud-heading', 'settings-heading', 'detail-node-label', 'inject-heading'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.color = color.main;
+            });
+            
+            // Detail border
+            const detailLabel = document.getElementById('detail-node-label');
+            if (detailLabel) detailLabel.style.borderColor = color.main;
+
+            // Buttons that are "solid" styled
+            ['save-btn', 'inject-btn'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.backgroundColor = color.main;
+            });
+
+            updateRotationButtonUI();
+            render();
+        }
+
+        function updateRotationButtonUI() {
+            const btn = document.getElementById('rotation-toggle');
+            if (isRotating) {
+                btn.classList.remove('active-mode');
+                btn.innerText = 'Stop';
+            } else {
+                btn.classList.add('active-mode');
+                btn.innerText = 'Rotate';
+            }
+        }
+
+        function shuffleTrackColor() {
+            tracks[currentTrackIndex].colorPair = colorPool[Math.floor(Math.random() * colorPool.length)];
+            syncViewWithTrack();
+            renderPager();
+            syncLocal();
+            showToast("THEME UPDATED");
+        }
+
+        function renderPager() {
+            const pager = document.getElementById('pager-dots');
+            pager.innerHTML = '';
+            tracks.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = `dot ${i === currentTrackIndex ? 'active' : ''}`;
+                if (i === currentTrackIndex) dot.style.backgroundColor = tracks[i].colorPair.main;
+                pager.appendChild(dot);
+            });
+        }
+
+        function updateTrackName() {
+            const newName = document.getElementById('track-name-input').value.trim();
+            if (newName) {
+                tracks[currentTrackIndex].name = newName;
+                syncViewWithTrack();
+                renderPager();
+                syncLocal();
+                closeSettings();
+                showToast("RENAMED");
+            }
+        }
 
         function showToast(msg) {
             const container = document.getElementById('toast-container');
             const el = document.createElement('div'); el.className = 'toast'; el.innerText = msg;
+            el.style.background = tracks[currentTrackIndex].colorPair.main;
             container.appendChild(el);
-            setTimeout(() => el.remove(), 2500);
+            setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(-20px)'; setTimeout(() => el.remove(), 400); }, 2500);
         }
 
         function getCanvasCenter() {
@@ -172,7 +462,7 @@
 
         function animate() {
             const isAnyViewOpen = document.querySelector('.view-modal.active-view') || document.querySelector('.modal.active');
-            if (isRotating && nodes.length > 0 && !isAnyViewOpen && !dragTargetId) {
+            if (isRotating && tracks[currentTrackIndex].nodes.length > 0 && !isAnyViewOpen && !dragTargetId) {
                 rotationAngle += 0.0035; render();
             }
             requestAnimationFrame(animate);
@@ -180,15 +470,16 @@
 
         function toggleRotation() {
             isRotating = !isRotating;
-            document.getElementById('rotate-icon').innerText = isRotating ? '⏸ STOP' : '▶ ROTATE';
+            updateRotationButtonUI();
         }
 
         function distributeNodes(forceAll = false) {
-            if (nodes.length === 0) return;
-            const defaultRadius = Math.min(window.innerWidth, window.innerHeight - 114) * 0.38;
-            nodes.forEach((node, index) => { 
+            const track = tracks[currentTrackIndex];
+            if (track.nodes.length === 0) return;
+            const defaultRadius = window.innerWidth * 0.41; 
+            track.nodes.forEach((node, index) => { 
                 if (forceAll || (!node.isDragged && node.baseAngle === undefined)) {
-                    node.baseAngle = (index / nodes.length) * 2 * Math.PI;
+                    node.baseAngle = (index / track.nodes.length) * 2 * Math.PI;
                     node.radius = defaultRadius;
                     if (forceAll) node.isDragged = false;
                 }
@@ -198,19 +489,20 @@
 
         function alignOrbit(forceAll = true) {
             distributeNodes(forceAll); rotationAngle = 0; render(); syncLocal();
-            showToast("全要素を均等に再配置しました");
+            showToast("ALIGNED");
         }
 
         function autoConnectLoop() {
-            if (nodes.length < 2) { connections = []; return; }
+            const track = tracks[currentTrackIndex];
+            if (track.nodes.length < 2) { track.connections = []; return; }
             const typeMap = {};
-            connections.forEach(c => typeMap[`${c.source}-${c.target}`] = c.type);
+            track.connections.forEach(c => typeMap[`${c.source}-${c.target}`] = c.type);
             const newConnections = [];
-            for (let i = 0; i < nodes.length; i++) {
-                const source = nodes[i].id; const target = nodes[(i + 1) % nodes.length].id;
+            for (let i = 0; i < track.nodes.length; i++) {
+                const source = track.nodes[i].id; const target = track.nodes[(i + 1) % track.nodes.length].id;
                 newConnections.push({ id: `${source}-${target}`, source, target, type: typeMap[`${source}-${target}`] || 'S' });
             }
-            connections = newConnections;
+            track.connections = newConnections;
         }
 
         function handlePointerDown(e, id) { if (isConnectMode) return; dragTargetId = id; document.querySelector(`.node[data-id="${id}"]`)?.classList.add('dragging'); }
@@ -218,99 +510,130 @@
             if (!dragTargetId) return;
             const center = getCanvasCenter(), rect = document.getElementById('canvas-container').getBoundingClientRect();
             const dx = e.clientX - rect.left - center.x, dy = e.clientY - rect.top - center.y;
-            const node = nodes.find(n => n.id === dragTargetId);
+            const node = tracks[currentTrackIndex].nodes.find(n => n.id === dragTargetId);
             if (node) { node.baseAngle = Math.atan2(dy, dx) - (isRotating ? rotationAngle : 0); node.radius = Math.sqrt(dx * dx + dy * dy); node.isDragged = true; render(); }
         }
         function handlePointerUp() {
             if (dragTargetId) {
                 document.querySelector(`.node[data-id="${dragTargetId}"]`)?.classList.remove('dragging');
-                dragTargetId = null;
-                reorderAndHarmonize();
-                syncLocal();
+                dragTargetId = null; reorderAndHarmonize(); syncLocal();
             }
         }
         function reorderAndHarmonize() {
-            if (nodes.length < 2) return;
-            nodes.sort((a, b) => {
+            const track = tracks[currentTrackIndex];
+            if (track.nodes.length < 2) return;
+            track.nodes.sort((a, b) => {
                 let angA = a.baseAngle % (2 * Math.PI); if (angA < 0) angA += 2 * Math.PI;
                 let angB = b.baseAngle % (2 * Math.PI); if (angB < 0) angB += 2 * Math.PI;
                 return angA - angB;
             });
-            alignOrbit(true);
+            autoConnectLoop(); distributeNodes(true);
         }
 
         async function fetchCloudList() {
             const listEl = document.getElementById('cloud-list');
-            if (!gasUrl) { listEl.innerHTML = '<div class="text-center py-10 text-red-400">URLをセットしてください</div>'; return; }
-            listEl.innerHTML = '<div class="text-center py-10 italic">同期中...</div>';
+            listEl.innerHTML = '<div class="text-center py-10 italic opacity-50 text-xs">Syncing...</div>';
             try {
+                const gasUrl = localStorage.getItem('gas_url') || "https://script.google.com/macros/s/AKfycbyo1o9FAANNVckA2HFtsxiC8PjOjytLCzTGs0bVuAZqYoLrMcxxckUO27uzJM38gi_6Gg/exec";
                 const res = await fetch(gasUrl);
                 const list = await res.json();
                 cloudProjectCache = Array.isArray(list) ? list : (list.data || []);
-                listEl.innerHTML = cloudProjectCache.length === 0 ? '<div class="text-center py-10 text-slate-600">保存データがありません</div>' : "";
+                listEl.innerHTML = cloudProjectCache.length === 0 ? '<div class="text-center py-10 text-slate-600">No data found.</div>' : "";
                 cloudProjectCache.reverse().forEach((item, index) => {
                     const actualIndex = cloudProjectCache.length - 1 - index;
-                    const div = document.createElement('div'); div.className = 'cloud-item';
-                    div.innerHTML = `<div class="flex flex-col"><span class="text-emerald-400 font-bold text-sm">${item.title || "無題"}</span><span class="text-[8px] text-slate-500 font-bold">${item.timestamp ? new Date(item.timestamp).toLocaleString() : ""}</span></div>
-                        <button onclick="loadFromCache(${actualIndex})" class="px-4 py-2 bg-slate-800 text-emerald-400 rounded-lg text-[10px] font-black">LOAD</button>`;
+                    const div = document.createElement('div'); div.className = 'bg-slate-800/40 p-4 rounded-xl border border-white/5 flex justify-between items-center mb-2';
+                    div.innerHTML = `<div class="flex flex-col"><span class="text-white font-bold text-sm truncate max-w-[150px]">${item.title || "Untitled"}</span><span class="text-[8px] text-slate-500 font-bold">${item.timestamp ? new Date(item.timestamp).toLocaleDateString() : ""}</span></div>
+                        <button onclick="loadFromCache(${actualIndex})" class="px-5 py-2 bg-white/5 text-white border border-white/10 rounded-lg text-[10px] font-black">LOAD</button>`;
                     listEl.appendChild(div);
                 });
-                showToast("クラウドと同期しました");
-            } catch (e) { listEl.innerHTML = '<div class="text-center py-10 text-red-400">同期失敗。URLと権限を確認。</div>'; }
+            } catch (e) { listEl.innerHTML = '<div class="text-center py-10 text-red-400 text-xs">Sync Failed.</div>'; }
         }
 
         async function saveToCloud() {
-            const title = document.getElementById('save-title').value.trim(); if (!title) return;
+            const title = document.getElementById('save-title').value.trim(); if (!title) { showToast("NEED TITLE"); return; }
+            const gasUrl = localStorage.getItem('gas_url') || "https://script.google.com/macros/s/AKfycbyo1o9FAANNVckA2HFtsxiC8PjOjytLCzTGs0bVuAZqYoLrMcxxckUO27uzJM38gi_6Gg/exec";
             const btn = document.getElementById('save-btn'); btn.innerText = "SAVING..."; btn.disabled = true;
             try {
-                const payload = { title, data: { nodes, connections, solutions } };
-                // mode: 'no-cors' を外して、GAS側の CORS に任せる
-                const res = await fetch(gasUrl, { method: 'POST', body: JSON.stringify(payload) });
-                showToast("保存完了しました");
-                setTimeout(() => { btn.innerText = "SAVE PROJECT"; btn.disabled = false; fetchCloudList(); }, 1000);
-            } catch (e) { 
-                showToast("保存中にエラー。GASの権限を確認。"); 
-                btn.innerText = "SAVE PROJECT"; btn.disabled = false;
-            }
+                const payload = { title, data: tracks[currentTrackIndex] };
+                await fetch(gasUrl, { method: 'POST', body: JSON.stringify(payload) });
+                showToast("SYNCED");
+                setTimeout(() => { btn.innerText = "SAVE TRACK"; btn.disabled = false; fetchCloudList(); }, 1000);
+            } catch (e) { showToast("ERROR"); btn.innerText = "SAVE TRACK"; btn.disabled = false; }
         }
 
         function loadFromCache(index) {
             const project = cloudProjectCache[index]; if (!project || !project.data) return;
-            const data = project.data;
-            nodes = data.nodes || []; connections = data.connections || []; solutions = data.solutions || {};
-            distributeNodes(); render(); syncLocal(); closeCloudManager(); showToast("読み込み完了");
+            tracks[currentTrackIndex] = project.data;
+            if(!tracks[currentTrackIndex].colorPair) tracks[currentTrackIndex].colorPair = colorPool[Math.floor(Math.random() * colorPool.length)];
+            syncViewWithTrack(); syncLocal(); closeCloudManager(); showToast("LOADED");
         }
 
         function openCloudManager() { document.getElementById('cloud-view').classList.add('active-view'); fetchCloudList(); }
         function closeCloudManager() { document.getElementById('cloud-view').classList.remove('active-view'); }
         function openSettings() { document.getElementById('settings-view').classList.add('active-view'); }
         function closeSettings() { document.getElementById('settings-view').classList.remove('active-view'); }
-        function saveSettings() { gasUrl = document.getElementById('gas-url-input').value.trim(); localStorage.setItem('gas_url', gasUrl); closeSettings(); showToast("設定保存"); }
-        function openNodeModal() { const label = prompt("要素名は？"); if(label) { nodes.push({ id: Date.now(), label, isDragged: false }); distributeNodes(true); render(); showToast("追加"); } }
+        function saveSettings() { syncLocal(); closeSettings(); }
+        
+        function openConfirmReset() { document.getElementById('confirm-reset-modal').classList.add('active'); }
+        function closeConfirmReset() { document.getElementById('confirm-reset-modal').classList.remove('active'); }
+
+        function openNodeModal(afterId = null) { 
+            insertionContextId = afterId;
+            document.getElementById('node-modal').classList.add('active'); 
+            setTimeout(() => document.getElementById('node-label-input').focus(), 100); 
+        }
+        function closeNodeModal() { document.getElementById('node-modal').classList.remove('active'); document.getElementById('node-label-input').value = ''; }
+        
+        function addNode() { 
+            const label = document.getElementById('node-label-input').value.trim(); 
+            if(label) { 
+                const track = tracks[currentTrackIndex];
+                const newNode = { id: Date.now(), label, isDragged: false };
+                if (insertionContextId) {
+                    const idx = track.nodes.findIndex(n => n.id === insertionContextId);
+                    track.nodes.splice(idx + 1, 0, newNode);
+                } else track.nodes.push(newNode);
+                distributeNodes(true); closeNodeModal(); render(); showToast("INJECTED"); syncLocal();
+            } 
+        }
+        
         function toggleConnectMode() {
             isConnectMode = !isConnectMode; const btn = document.getElementById('connect-btn');
-            btn.className = isConnectMode ? "pointer-events-auto px-8 py-3 bg-amber-500 text-slate-950 rounded-xl font-black text-[10px]" : "pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px]";
-            btn.innerText = isConnectMode ? 'ターゲットを選択...' : '極性切替';
+            btn.className = isConnectMode ? "pointer-events-auto px-10 py-4 bg-white text-slate-900 rounded-2xl font-black text-xs active:scale-95 shadow-2xl" : "pointer-events-auto px-10 py-4 bg-slate-900 text-slate-300 border border-white/10 rounded-2xl font-black text-xs shadow-2xl backdrop-blur-xl";
+            btn.innerText = isConnectMode ? 'SELECT TARGET...' : 'POLARITY SWAP';
             if (!isConnectMode) selectedNodeId = null; render();
         }
+
         function handleNodeClick(id) {
             if (isConnectMode) {
-                if (selectedNodeId === null) { selectedNodeId = id; document.getElementById('connect-btn').innerText = '次を選択'; }
+                const track = tracks[currentTrackIndex];
+                if (selectedNodeId === null) { selectedNodeId = id; document.getElementById('connect-btn').innerText = 'LINK TO...'; }
                 else if (selectedNodeId !== id) { 
-                    const type = confirm("極性は Reinforce(S) ですか？（キャンセルで Balance(O)）") ? 'S' : 'O';
-                    const conn = connections.find(c => c.source === selectedNodeId && c.target === id);
+                    const type = confirm("Reinforce (S)?\nOK = S (Same) / Cancel = O (Opposite)") ? 'S' : 'O';
+                    const conn = track.connections.find(c => c.source === selectedNodeId && c.target === id);
                     if (conn) conn.type = type; toggleConnectMode(); render();
                 }
-            } else { openDetail(id); }
+            } else openDetail(id);
         }
+
         function openDetail(id) {
-            const node = nodes.find(n => n.id === id); if (!node) return;
+            const track = tracks[currentTrackIndex];
+            const node = track.nodes.find(n => n.id === id); if (!node) return;
             currentDetailNodeId = id; document.getElementById('detail-node-label').innerText = node.label;
-            document.getElementById('solution-input').value = solutions[id] || ""; document.getElementById('detail-view').classList.add('active-view');
+            document.getElementById('solution-input').value = track.solutions[id] || ""; 
+            document.getElementById('detail-view').classList.add('active-view');
         }
         function closeDetail() { document.getElementById('detail-view').classList.remove('active-view'); render(); }
-        function saveSolution() { if (currentDetailNodeId) { solutions[currentDetailNodeId] = document.getElementById('solution-input').value; syncLocal(); closeDetail(); showToast("保存"); } }
-        function deleteCurrentNode() { nodes = nodes.filter(n => n.id !== currentDetailNodeId); connections = connections.filter(c => c.source !== currentDetailNodeId && c.target !== currentDetailNodeId); delete solutions[currentDetailNodeId]; distributeNodes(true); syncLocal(); closeDetail(); }
+        function saveSolution() { if (currentDetailNodeId) { tracks[currentTrackIndex].solutions[currentDetailNodeId] = document.getElementById('solution-input').value; syncLocal(); closeDetail(); showToast("SAVED"); } }
+        function deleteCurrentNode() { 
+            if(confirm("Delete this node?")) { 
+                const track = tracks[currentTrackIndex];
+                track.nodes = track.nodes.filter(n => n.id !== currentDetailNodeId); 
+                track.connections = track.connections.filter(c => c.source !== currentDetailNodeId && c.target !== currentDetailNodeId); 
+                delete track.solutions[currentDetailNodeId]; 
+                distributeNodes(true); syncLocal(); closeDetail(); 
+            } 
+        }
 
         function getRotatedPos(node, extraRadius = 0) {
             const center = getCanvasCenter(), r = (node.radius || 0) + extraRadius;
@@ -319,44 +642,92 @@
         }
 
         function render() {
-            const currentIds = nodes.map(n => n.id.toString());
-            document.querySelectorAll('.node, .solution-cloud').forEach(el => { if (!currentIds.includes(el.dataset.id)) el.remove(); });
-            nodes.forEach(node => {
+            const track = tracks[currentTrackIndex];
+            const color = track.colorPair;
+            const currentIds = track.nodes.map(n => n.id.toString());
+            document.querySelectorAll('.node, .solution-cloud, .insert-btn').forEach(el => { if (!currentIds.includes(el.dataset.id)) el.remove(); });
+            
+            track.nodes.forEach(node => {
                 const pos = getRotatedPos(node);
                 let div = document.querySelector(`.node[data-id="${node.id}"]`);
-                if (!div) { div = document.createElement('div'); div.className = 'node'; div.dataset.id = node.id; div.addEventListener('click', (e) => { if (!dragTargetId) handleNodeClick(node.id); }); div.addEventListener('pointerdown', (e) => handlePointerDown(e, node.id)); dynamicLayer.appendChild(div); }
+                if (!div) { 
+                    div = document.createElement('div'); div.className = 'node'; div.dataset.id = node.id; 
+                    div.addEventListener('click', (e) => { if (!dragTargetId) handleNodeClick(node.id); }); 
+                    div.addEventListener('pointerdown', (e) => handlePointerDown(e, node.id)); 
+                    dynamicLayer.appendChild(div); 
+                }
                 div.style.left = pos.x + 'px'; div.style.top = pos.y + 'px'; div.textContent = node.label;
-                if (solutions[node.id] && !isConnectMode) {
+                div.classList.toggle('selected', selectedNodeId === node.id);
+
+                if (track.solutions[node.id] && !isConnectMode) {
                     const cloudPos = getRotatedPos(node, 65);
                     let cloud = document.querySelector(`.solution-cloud[data-id="${node.id}"]`);
                     if (!cloud) { cloud = document.createElement('div'); cloud.className = 'solution-cloud'; cloud.dataset.id = node.id; cloud.onclick = (e) => { e.stopPropagation(); openDetail(node.id); }; dynamicLayer.appendChild(cloud); }
-                    cloud.style.left = cloudPos.x + 'px'; cloud.style.top = cloudPos.y + 'px'; cloud.textContent = solutions[node.id];
+                    cloud.style.left = cloudPos.x + 'px'; cloud.style.top = cloudPos.y + 'px'; cloud.textContent = track.solutions[node.id];
                 }
             });
+
             while (svg.lastChild && svg.lastChild.nodeName !== 'defs') svg.removeChild(svg.lastChild);
-            connections.forEach((conn) => {
-                const sNode = nodes.find(n => n.id === conn.source), tNode = nodes.find(n => n.id === conn.target);
+            Array.from(defs.querySelectorAll('linearGradient')).forEach(g => g.remove());
+
+            track.connections.forEach((conn) => {
+                const sNode = track.nodes.find(n => n.id === conn.source), tNode = track.nodes.find(n => n.id === conn.target);
                 if (!sNode || !tNode) return;
                 const s = getRotatedPos(sNode), t = getRotatedPos(tNode);
                 const radius = (s.radius + t.radius) / 2;
                 let diff = (t.angle - s.angle) % (2 * Math.PI); if (diff < 0) diff += 2 * Math.PI;
                 const largeArc = diff > Math.PI ? 1 : 0;
+                
+                const gradId = `grad-${conn.id}`;
+                const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+                grad.setAttribute("id", gradId);
+                grad.setAttribute("gradientUnits", "userSpaceOnUse");
+                grad.setAttribute("x1", s.x); grad.setAttribute("y1", s.y);
+                grad.setAttribute("x2", t.x); grad.setAttribute("y2", t.y);
+                const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+                stop1.setAttribute("offset", "0%"); 
+                stop1.setAttribute("stop-color", conn.type === 'S' ? color.label : "#fb923c");
+                const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+                stop2.setAttribute("offset", "100%"); 
+                stop2.setAttribute("stop-color", conn.type === 'S' ? color.main : "#f43f5e");
+                grad.appendChild(stop1); grad.appendChild(stop2); defs.appendChild(grad);
+
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("id", `path-${conn.id}`);
                 path.setAttribute("d", `M ${s.x} ${s.y} A ${radius} ${radius} 0 ${largeArc} 1 ${t.x} ${t.y}`);
-                path.setAttribute("class", "flow-line"); path.setAttribute("stroke", conn.type === 'S' ? '#10b981' : '#f43f5e');
-                path.setAttribute("marker-end", conn.type === 'S' ? "url(#arrowhead)" : "url(#arrowhead-red)");
+                path.setAttribute("class", "flow-line"); 
+                path.setAttribute("stroke", `url(#${gradId})`);
+                path.setAttribute("marker-end", conn.type === 'S' ? "url(#arrowhead-s)" : "url(#arrowhead-o)");
                 svg.appendChild(path);
-                const midAngle = s.angle + diff / 2;
-                const lx = getCanvasCenter().x + (radius + 25) * Math.cos(midAngle), ly = getCanvasCenter().y + (radius + 25) * Math.sin(midAngle);
+
+                if (!isConnectMode) {
+                    const midAngle = s.angle + diff / 2;
+                    const mx = getCanvasCenter().x + radius * Math.cos(midAngle);
+                    const my = getCanvasCenter().y + radius * Math.sin(midAngle);
+                    let btn = document.querySelector(`.insert-btn[data-id="${conn.source}"]`);
+                    if (!btn) {
+                        btn = document.createElement('div'); btn.className = 'insert-btn'; btn.dataset.id = conn.source;
+                        btn.innerText = '＋'; btn.onclick = () => openNodeModal(conn.source);
+                        dynamicLayer.appendChild(btn);
+                    }
+                    btn.style.left = mx + 'px'; btn.style.top = my + 'px';
+                }
+
+                const midAngleLabel = s.angle + diff / 2;
+                const lx = getCanvasCenter().x + (radius + 32) * Math.cos(midAngleLabel), ly = getCanvasCenter().y + (radius + 32) * Math.sin(midAngleLabel);
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 text.setAttribute("x", lx); text.setAttribute("y", ly);
                 text.setAttribute("class", conn.type === 'S' ? 'label-s' : 'label-o');
-                text.setAttribute("text-anchor", "middle"); text.textContent = conn.type; svg.appendChild(text);
+                text.setAttribute("text-anchor", "middle"); text.setAttribute("dominant-baseline", "middle"); text.textContent = conn.type; svg.appendChild(text);
             });
         }
         function displayRandomHint() { const hint = hintsList[Math.floor(Math.random() * hintsList.length)]; const textEl = document.getElementById('hint-text'); if (textEl) textEl.innerText = hint.text; }
-        function syncLocal() { localStorage.setItem('system_loops_v17_5', JSON.stringify({nodes, connections, solutions})); }
-        function clearCanvas() { if(confirm("データを全リセットしますか？")) { localStorage.removeItem('system_loops_v17_5'); nodes=[]; connections=[]; solutions={}; render(); } }
+        function syncLocal() { localStorage.setItem('system_loops_v19_7_multi', JSON.stringify(tracks)); }
+        function clearCanvas() { 
+            tracks[currentTrackIndex] = createNewTrack(`Track ${currentTrackIndex + 1}`);
+            closeConfirmReset(); closeSettings(); syncViewWithTrack();
+            showToast("RESET COMPLETE"); 
+        }
     </script>
 </body>
 </html>
