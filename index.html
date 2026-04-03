@@ -3,121 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Loop Creator - Robust Sync v17.3</title>
+    <title>System Loop Creator - Power Sync v17.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
-        
-        #canvas-container { 
-            position: relative; 
-            width: 100vw; 
-            height: calc(100vh - 114px); 
-            overflow: hidden; 
-            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
-            animation: fadeIn 1s ease-out;
-            z-index: 1;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
+        #canvas-container { position: relative; width: 100vw; height: calc(100vh - 114px); overflow: hidden; background: radial-gradient(circle at center, #0f172a 0%, #020617 100%); z-index: 1; }
         header { position: relative; z-index: 100; height: 60px; }
-
-        #hint-banner {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(16, 185, 129, 0.1);
-            padding: 10px 28px;
-            height: 54px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 90;
-            position: relative;
-        }
-        #hint-text {
-            font-size: 13px; font-weight: 700; color: #fde047; line-height: 1.5; text-align: center; letter-spacing: 0.05em; text-shadow: 0 0 12px rgba(253, 224, 71, 0.25); min-height: 1.5em;
-        }
-
-        .node { 
-            position: absolute; padding: 10px 18px; background: rgba(15, 23, 42, 0.95); border: 2px solid #10b981; border-radius: 9999px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); 
-            user-select: none; z-index: 30; min-width: 100px; text-align: center; font-weight: 700; color: #fff; backdrop-filter: blur(12px); transform: translate(-50%, -50%); font-size: 12px; cursor: grab;
-            transition: left 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-        }
+        #hint-banner { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(16, 185, 129, 0.1); padding: 10px 28px; height: 54px; display: flex; align-items: center; justify-content: center; z-index: 90; }
+        #hint-text { font-size: 13px; font-weight: 700; color: #fde047; line-height: 1.5; text-align: center; }
+        .node { position: absolute; padding: 10px 18px; background: rgba(15, 23, 42, 0.95); border: 2px solid #10b981; border-radius: 9999px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); user-select: none; z-index: 30; min-width: 100px; text-align: center; font-weight: 700; color: #fff; transform: translate(-50%, -50%); font-size: 12px; cursor: grab; transition: left 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
         .node:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.1); transition: none; }
-        .node.dragging { border-color: #fde047; box-shadow: 0 0 30px rgba(253, 224, 71, 0.3); transition: none; }
-
-        .solution-cloud {
-            position: absolute; padding: 8px 14px; background: rgba(253, 224, 71, 0.05); border: 1px dashed #fde047; border-radius: 20px; color: #fef08a; font-size: 10px; max-width: 120px; text-align: center;
-            z-index: 25; transform: translate(-50%, -50%); backdrop-filter: blur(4px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: floatCloud 6s ease-in-out infinite; cursor: pointer;
-            transition: left 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-        }
+        .node.dragging { border-color: #fde047; transition: none; }
+        .solution-cloud { position: absolute; padding: 8px 14px; background: rgba(253, 224, 71, 0.05); border: 1px dashed #fde047; border-radius: 20px; color: #fef08a; font-size: 10px; max-width: 120px; text-align: center; z-index: 25; transform: translate(-50%, -50%); backdrop-filter: blur(4px); animation: floatCloud 6s ease-in-out infinite; cursor: pointer; transition: left 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
         @keyframes floatCloud { 0%, 100% { margin-top: -2px; } 50% { margin-top: 2px; } }
-        
         svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .flow-line { fill: none; stroke-width: 3; stroke-dasharray: 12, 6; animation: flow 0.6s linear infinite; }
-        .solution-line { fill: none; stroke: #fde047; stroke-width: 1.5; stroke-dasharray: 3, 3; opacity: 0.6; }
         @keyframes flow { from { stroke-dashoffset: 36; } to { stroke-dashoffset: 0; } }
-
         .label-s { fill: #10b981; font-weight: 900; font-size: 14px; }
         .label-o { fill: #f43f5e; font-weight: 900; font-size: 14px; }
-
         .view-modal { display: none; position: fixed; inset: 0; background: #020617; z-index: 300; padding: 24px; overflow-y: auto; }
-        .active-view { display: block !important; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
+        .active-view { display: block !important; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 400; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .modal.active { display: flex; }
-        
-        .fab {
-            position: fixed; bottom: 32px; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 30px rgba(0,0,0,0.5); z-index: 100; transition: all 0.2s; border: 2px solid rgba(255,255,255,0.1); cursor: pointer;
-        }
+        .fab { position: fixed; bottom: 32px; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 30px rgba(0,0,0,0.5); z-index: 100; transition: all 0.2s; border: 2px solid rgba(255,255,255,0.1); cursor: pointer; }
         .fab-add { right: 24px; background: #10b981; color: white; font-size: 32px; font-weight: 900; }
-        .fab-settings { left: 24px; background: #1e293b; color: #94a3b8; font-size: 24px; }
-
-        .header-btn {
-            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 6px 14px; font-size: 11px; font-weight: 900; color: #10b981; display: flex; align-items: center; gap: 8px; cursor: pointer;
-        }
-
-        #toast-container {
-            position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 500; pointer-events: none;
-        }
-        .toast {
-            background: #10b981; color: #020617; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 13px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin-bottom: 10px; animation: toastIn 0.3s ease-out;
-        }
+        .fab-settings { left: 24px; background: #1e293b; color: #94a3b8; }
+        .header-btn { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 6px 14px; font-size: 11px; font-weight: 900; color: #10b981; cursor: pointer; }
+        #toast-container { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 500; pointer-events: none; }
+        .toast { background: #10b981; color: #020617; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 13px; margin-bottom: 10px; animation: toastIn 0.3s ease-out; }
         @keyframes toastIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
         .cloud-item { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; border-radius: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .loader { width: 12px; height: 12px; border: 2px solid #10b981; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-
     <header class="p-4 bg-slate-900/95 flex justify-between items-center backdrop-blur-xl">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center">
                 <svg class="w-5 h-5 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
             <div class="flex flex-col">
-                <h1 class="text-xs font-black text-white tracking-tighter italic text-emerald-400 leading-none">Cloud Orchestrator</h1>
-                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v17.3 robust sync</span>
+                <h1 class="text-xs font-black text-white italic text-emerald-400 leading-none">Cloud Orchestrator</h1>
+                <span class="text-[7px] text-slate-500 font-black uppercase mt-1 tracking-widest">v17.5 Power Sync</span>
             </div>
         </div>
-        
         <div class="flex items-center gap-2">
             <button onclick="alignOrbit(true)" class="header-btn text-amber-400 border-amber-500/30">🎯 ALIGN</button>
-            <button onclick="toggleRotation()" id="rotation-toggle" class="header-btn">
-                <span id="rotate-icon">⏸ STOP</span>
-            </button>
+            <button onclick="toggleRotation()" id="rotation-toggle" class="header-btn">⏸ STOP</button>
             <button onclick="openCloudManager()" class="header-btn">☁️ SYNC</button>
-            <button onclick="clearCanvas()" class="px-2 py-1.5 text-[8px] bg-red-900/10 text-red-500 border border-red-500/20 rounded-full font-bold">RESET</button>
+            <button onclick="clearCanvas()" class="px-2 py-1.5 text-[8px] text-red-500 font-bold">RESET</button>
         </div>
     </header>
 
-    <div id="hint-banner">
-        <span id="hint-text"></span>
-    </div>
-
+    <div id="hint-banner"><span id="hint-text"></span></div>
     <div id="toast-container"></div>
 
     <div id="canvas-container">
@@ -134,7 +71,7 @@
     <div id="cloud-view" class="view-modal">
         <div class="max-w-md mx-auto">
             <button onclick="closeCloudManager()" class="text-slate-400 font-bold mb-8 flex items-center gap-2">← Back</button>
-            <h2 class="text-2xl font-black mb-8 text-emerald-400 italic">Cloud Manager</h2>
+            <h2 class="text-2xl font-black mb-8 text-emerald-400">Cloud Manager</h2>
             <div class="mb-10 bg-slate-900/50 p-6 rounded-2xl border border-emerald-500/20">
                 <div class="flex flex-col gap-3">
                     <input type="text" id="save-title" class="w-full p-4 bg-slate-950 border border-slate-800 text-emerald-400 rounded-xl outline-none font-bold" placeholder="プロジェクト名...">
@@ -143,7 +80,7 @@
             </div>
             <h3 class="text-[10px] text-slate-500 font-black uppercase mb-4 tracking-widest">Stored Projects</h3>
             <div id="cloud-list" class="space-y-3">
-                <div class="text-center py-10 text-slate-600 text-xs italic">SYNCボタンを押してデータを取得してください</div>
+                <div class="text-center py-10 text-slate-600 text-xs italic">SYNCボタンでデータを更新してください</div>
             </div>
         </div>
     </div>
@@ -158,7 +95,7 @@
             <textarea id="solution-input" class="flex-1 bg-slate-900/50 rounded-3xl border border-slate-800 p-6 mb-8 text-white outline-none resize-none" placeholder="アクションプラン..."></textarea>
             <div class="flex flex-col gap-4 mb-10">
                 <button onclick="saveSolution()" class="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black">SAVE DATA</button>
-                <button onclick="deleteCurrentNode()" class="w-full py-4 text-xs text-red-500 font-bold uppercase">Delete</button>
+                <button onclick="deleteCurrentNode()" class="w-full py-4 text-xs text-red-500 font-bold">Delete</button>
             </div>
         </div>
     </div>
@@ -178,15 +115,11 @@
         <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px]">極性切替</button>
     </div>
 
-    <div id="node-modal" class="modal p-6"><div class="bg-slate-900 p-8 rounded-[2.5rem] w-full max-w-sm"><h2 class="text-emerald-400 font-black mb-6">New Element</h2><input type="text" id="node-input" class="w-full p-4 bg-slate-800 border border-slate-700 text-white rounded-xl mb-6 text-center" placeholder="..."><div class="flex gap-3"><button onclick="closeNodeModal()" class="flex-1 py-4 text-slate-500 font-bold">CANCEL</button><button onclick="addNode()" class="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black">ADD</button></div></div></div>
-    <div id="conn-modal" class="modal p-6"><div class="bg-slate-900 p-8 rounded-[2.5rem] w-full max-w-sm text-center"><h2 class="text-emerald-400 font-black mb-6 italic">Polarity</h2><div class="grid grid-cols-2 gap-4"><button onclick="completeConnection('S')" class="p-6 bg-emerald-950/20 border border-emerald-500/20 rounded-2xl"><div class="text-4xl font-black text-emerald-500">S</div></button><button onclick="completeConnection('O')" class="p-6 bg-red-950/20 border border-red-500/20 rounded-2xl"><div class="text-4xl font-black text-red-500">O</div></button></div></div></div>
-
     <script>
         const hintsList = [
             { text: "「同じ問題が形を変えて何度も起きる」時、そこには必ず隠れたループがある。" },
             { text: "犯人（人）を探すのをやめ、行動を強制している「構造（ループ）」を探す。" },
-            { text: "レバレッジポイントは、常に直感に反する場所にある。" },
-            { text: "良かれと思ってやったこと」が裏目に出る時、負のフィードバックを探す。" }
+            { text: "レバレッジポイントは、常に直感に反する場所にある。" }
         ];
 
         let nodes = [];
@@ -198,7 +131,6 @@
         let rotationAngle = 0;
         let currentDetailNodeId = null;
         let dragTargetId = null;
-        
         let cloudProjectCache = [];
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyo1o9FAANNVckA2HFtsxiC8PjOjytLCzTGs0bVuAZqYoLrMcxxckUO27uzJM38gi_6Gg/exec";
         let gasUrl = localStorage.getItem('gas_url') || DEFAULT_GAS_URL;
@@ -207,7 +139,7 @@
         const svg = document.getElementById('svg-layer');
 
         window.onload = () => {
-            const saved = localStorage.getItem('system_loops_v17_3');
+            const saved = localStorage.getItem('system_loops_v17_5');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
@@ -265,10 +197,7 @@
         }
 
         function alignOrbit(forceAll = true) {
-            distributeNodes(forceAll); 
-            rotationAngle = 0; 
-            render(); 
-            syncLocal();
+            distributeNodes(forceAll); rotationAngle = 0; render(); syncLocal();
             showToast("全要素を均等に再配置しました");
         }
 
@@ -285,19 +214,13 @@
         }
 
         function handlePointerDown(e, id) { if (isConnectMode) return; dragTargetId = id; document.querySelector(`.node[data-id="${id}"]`)?.classList.add('dragging'); }
-
         function handlePointerMove(e) {
             if (!dragTargetId) return;
             const center = getCanvasCenter(), rect = document.getElementById('canvas-container').getBoundingClientRect();
             const dx = e.clientX - rect.left - center.x, dy = e.clientY - rect.top - center.y;
             const node = nodes.find(n => n.id === dragTargetId);
-            if (node) {
-                node.baseAngle = Math.atan2(dy, dx) - (isRotating ? rotationAngle : 0);
-                node.radius = Math.sqrt(dx * dx + dy * dy);
-                node.isDragged = true; render();
-            }
+            if (node) { node.baseAngle = Math.atan2(dy, dx) - (isRotating ? rotationAngle : 0); node.radius = Math.sqrt(dx * dx + dy * dy); node.isDragged = true; render(); }
         }
-
         function handlePointerUp() {
             if (dragTargetId) {
                 document.querySelector(`.node[data-id="${dragTargetId}"]`)?.classList.remove('dragging');
@@ -306,7 +229,6 @@
                 syncLocal();
             }
         }
-
         function reorderAndHarmonize() {
             if (nodes.length < 2) return;
             nodes.sort((a, b) => {
@@ -319,132 +241,54 @@
 
         async function fetchCloudList() {
             const listEl = document.getElementById('cloud-list');
-            if (!gasUrl) {
-                listEl.innerHTML = '<div class="text-center py-10 text-red-400 text-xs italic">SettingsからURLを設定してください</div>';
-                return;
-            }
-            
-            listEl.innerHTML = '<div class="text-center py-10 text-slate-600 text-xs italic">同期中...</div>';
-            
+            if (!gasUrl) { listEl.innerHTML = '<div class="text-center py-10 text-red-400">URLをセットしてください</div>'; return; }
+            listEl.innerHTML = '<div class="text-center py-10 italic">同期中...</div>';
             try {
-                const res = await fetch(gasUrl, { redirect: 'follow' });
-                let rawData = await res.json();
-                
-                // --- Robust Parsing Engine ---
-                let list = null;
-                
-                // 文字列で届いた場合の再パース
-                if (typeof rawData === 'string') {
-                    try { rawData = JSON.parse(rawData); } catch(e) {}
-                }
-
-                // 配列そのものか、オブジェクト内の配列かを探す
-                if (Array.isArray(rawData)) {
-                    list = rawData;
-                } else if (rawData && typeof rawData === 'object') {
-                    // 一般的なデータ格納キーを探索
-                    list = rawData.projects || rawData.data || rawData.list || Object.values(rawData).find(v => Array.isArray(v));
-                }
-
-                if (!list || !Array.isArray(list)) {
-                    console.error("Format mismatch. Received:", rawData);
-                    listEl.innerHTML = `<div class="text-center py-10 text-red-400 text-xs italic">データの形式が正しくありません<br><span class="text-[8px] opacity-50">Received: ${typeof rawData}</span></div>`;
-                    return;
-                }
-
-                cloudProjectCache = list; 
-                listEl.innerHTML = list.length === 0 ? '<div class="text-center py-10 text-slate-600 text-xs">保存されたプロジェクトはありません</div>' : "";
-                
-                [...list].reverse().forEach((item, index) => {
-                    const actualIndex = list.length - 1 - index;
-                    const div = document.createElement('div'); 
-                    div.className = 'cloud-item';
-                    const date = item.timestamp ? new Date(item.timestamp).toLocaleString('ja-JP', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "日付不明";
-                    
-                    div.innerHTML = `
-                        <div class="flex flex-col">
-                            <span class="text-emerald-400 font-bold text-sm truncate max-w-[150px]">${item.title || "無題"}</span>
-                            <span class="text-[8px] text-slate-500 font-bold">${date}</span>
-                        </div>
-                        <button onclick="loadFromCache(${actualIndex})" class="px-4 py-2 bg-slate-800 text-emerald-400 rounded-lg text-[10px] font-black border border-emerald-500/20">LOAD</button>
-                    `;
+                const res = await fetch(gasUrl);
+                const list = await res.json();
+                cloudProjectCache = Array.isArray(list) ? list : (list.data || []);
+                listEl.innerHTML = cloudProjectCache.length === 0 ? '<div class="text-center py-10 text-slate-600">保存データがありません</div>' : "";
+                cloudProjectCache.reverse().forEach((item, index) => {
+                    const actualIndex = cloudProjectCache.length - 1 - index;
+                    const div = document.createElement('div'); div.className = 'cloud-item';
+                    div.innerHTML = `<div class="flex flex-col"><span class="text-emerald-400 font-bold text-sm">${item.title || "無題"}</span><span class="text-[8px] text-slate-500 font-bold">${item.timestamp ? new Date(item.timestamp).toLocaleString() : ""}</span></div>
+                        <button onclick="loadFromCache(${actualIndex})" class="px-4 py-2 bg-slate-800 text-emerald-400 rounded-lg text-[10px] font-black">LOAD</button>`;
                     listEl.appendChild(div);
                 });
                 showToast("クラウドと同期しました");
+            } catch (e) { listEl.innerHTML = '<div class="text-center py-10 text-red-400">同期失敗。URLと権限を確認。</div>'; }
+        }
+
+        async function saveToCloud() {
+            const title = document.getElementById('save-title').value.trim(); if (!title) return;
+            const btn = document.getElementById('save-btn'); btn.innerText = "SAVING..."; btn.disabled = true;
+            try {
+                const payload = { title, data: { nodes, connections, solutions } };
+                // mode: 'no-cors' を外して、GAS側の CORS に任せる
+                const res = await fetch(gasUrl, { method: 'POST', body: JSON.stringify(payload) });
+                showToast("保存完了しました");
+                setTimeout(() => { btn.innerText = "SAVE PROJECT"; btn.disabled = false; fetchCloudList(); }, 1000);
             } catch (e) { 
-                console.error("Sync Error:", e);
-                listEl.innerHTML = `<div class="text-center py-10 text-red-400 text-xs italic">通信エラー<br><span class="text-[8px] opacity-50">${e.message}</span></div>`; 
+                showToast("保存中にエラー。GASの権限を確認。"); 
+                btn.innerText = "SAVE PROJECT"; btn.disabled = false;
             }
         }
 
         function loadFromCache(index) {
-            const project = cloudProjectCache[index];
-            if (!project || !project.data) {
-                showToast("データの整合性が確認できません");
-                return;
-            }
-            
-            const data = typeof project.data === 'string' ? JSON.parse(project.data) : project.data;
-            nodes = data.nodes || []; 
-            connections = data.connections || []; 
-            solutions = data.solutions || {};
-            
-            distributeNodes(); 
-            render(); 
-            syncLocal(); 
-            closeCloudManager(); 
-            showToast("「" + project.title + "」を展開しました");
-        }
-
-        async function saveToCloud() {
-            const title = document.getElementById('save-title').value.trim(); 
-            if (!title) { showToast("タイトルを入力してください"); return; }
-            
-            const btn = document.getElementById('save-btn');
-            btn.innerText = "SAVING..."; btn.disabled = true;
-            
-            try {
-                // 文字列化して送信（エスケープ問題を回避）
-                const payload = JSON.stringify({ title, data: { nodes, connections, solutions } });
-                await fetch(gasUrl, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: payload
-                });
-                
-                setTimeout(() => { 
-                    btn.innerText = "SAVE PROJECT"; btn.disabled = false; 
-                    fetchCloudList(); 
-                    showToast("保存完了しました"); 
-                }, 1200);
-            } catch (e) { 
-                showToast("通信失敗"); btn.disabled = false; 
-            }
+            const project = cloudProjectCache[index]; if (!project || !project.data) return;
+            const data = project.data;
+            nodes = data.nodes || []; connections = data.connections || []; solutions = data.solutions || {};
+            distributeNodes(); render(); syncLocal(); closeCloudManager(); showToast("読み込み完了");
         }
 
         function openCloudManager() { document.getElementById('cloud-view').classList.add('active-view'); fetchCloudList(); }
         function closeCloudManager() { document.getElementById('cloud-view').classList.remove('active-view'); }
         function openSettings() { document.getElementById('settings-view').classList.add('active-view'); }
         function closeSettings() { document.getElementById('settings-view').classList.remove('active-view'); }
-        function saveSettings() { 
-            gasUrl = document.getElementById('gas-url-input').value.trim(); 
-            localStorage.setItem('gas_url', gasUrl); 
-            showToast("設定を更新しました"); closeSettings(); 
-        }
-        function openNodeModal() { document.getElementById('node-modal').classList.add('active'); setTimeout(() => document.getElementById('node-input').focus(), 100); }
-        function closeNodeModal() { document.getElementById('node-modal').classList.remove('active'); document.getElementById('node-input').value = ''; }
-        function addNode() { 
-            const label = document.getElementById('node-input').value; 
-            if (!label) return; 
-            nodes.push({ id: Date.now(), label, isDragged: false }); 
-            distributeNodes(true); 
-            closeNodeModal(); render(); showToast("要素を追加しました");
-        }
-
+        function saveSettings() { gasUrl = document.getElementById('gas-url-input').value.trim(); localStorage.setItem('gas_url', gasUrl); closeSettings(); showToast("設定保存"); }
+        function openNodeModal() { const label = prompt("要素名は？"); if(label) { nodes.push({ id: Date.now(), label, isDragged: false }); distributeNodes(true); render(); showToast("追加"); } }
         function toggleConnectMode() {
-            isConnectMode = !isConnectMode;
-            const btn = document.getElementById('connect-btn');
+            isConnectMode = !isConnectMode; const btn = document.getElementById('connect-btn');
             btn.className = isConnectMode ? "pointer-events-auto px-8 py-3 bg-amber-500 text-slate-950 rounded-xl font-black text-[10px]" : "pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px]";
             btn.innerText = isConnectMode ? 'ターゲットを選択...' : '極性切替';
             if (!isConnectMode) selectedNodeId = null; render();
@@ -452,30 +296,21 @@
         function handleNodeClick(id) {
             if (isConnectMode) {
                 if (selectedNodeId === null) { selectedNodeId = id; document.getElementById('connect-btn').innerText = '次を選択'; }
-                else if (selectedNodeId !== id) { tempTargetId = id; document.getElementById('conn-modal').classList.add('active'); }
-                render();
+                else if (selectedNodeId !== id) { 
+                    const type = confirm("極性は Reinforce(S) ですか？（キャンセルで Balance(O)）") ? 'S' : 'O';
+                    const conn = connections.find(c => c.source === selectedNodeId && c.target === id);
+                    if (conn) conn.type = type; toggleConnectMode(); render();
+                }
             } else { openDetail(id); }
         }
         function openDetail(id) {
             const node = nodes.find(n => n.id === id); if (!node) return;
             currentDetailNodeId = id; document.getElementById('detail-node-label').innerText = node.label;
-            document.getElementById('solution-input').value = solutions[id] || "";
-            document.getElementById('detail-view').classList.add('active-view');
+            document.getElementById('solution-input').value = solutions[id] || ""; document.getElementById('detail-view').classList.add('active-view');
         }
         function closeDetail() { document.getElementById('detail-view').classList.remove('active-view'); render(); }
-        function saveSolution() { if (currentDetailNodeId) { solutions[currentDetailNodeId] = document.getElementById('solution-input').value; syncLocal(); closeDetail(); showToast("アクションを保存"); } }
-        function deleteCurrentNode() {
-            nodes = nodes.filter(n => n.id !== currentDetailNodeId);
-            connections = connections.filter(c => c.source !== currentDetailNodeId && c.target !== currentDetailNodeId);
-            delete solutions[currentDetailNodeId]; distributeNodes(true); syncLocal(); closeDetail();
-        }
-
-        function completeConnection(type) {
-            const conn = connections.find(c => c.source === selectedNodeId && c.target === tempTargetId);
-            if (conn) conn.type = type;
-            document.getElementById('conn-modal').classList.remove('active');
-            toggleConnectMode(); selectedNodeId = null; render();
-        }
+        function saveSolution() { if (currentDetailNodeId) { solutions[currentDetailNodeId] = document.getElementById('solution-input').value; syncLocal(); closeDetail(); showToast("保存"); } }
+        function deleteCurrentNode() { nodes = nodes.filter(n => n.id !== currentDetailNodeId); connections = connections.filter(c => c.source !== currentDetailNodeId && c.target !== currentDetailNodeId); delete solutions[currentDetailNodeId]; distributeNodes(true); syncLocal(); closeDetail(); }
 
         function getRotatedPos(node, extraRadius = 0) {
             const center = getCanvasCenter(), r = (node.radius || 0) + extraRadius;
@@ -486,75 +321,42 @@
         function render() {
             const currentIds = nodes.map(n => n.id.toString());
             document.querySelectorAll('.node, .solution-cloud').forEach(el => { if (!currentIds.includes(el.dataset.id)) el.remove(); });
-
             nodes.forEach(node => {
                 const pos = getRotatedPos(node);
                 let div = document.querySelector(`.node[data-id="${node.id}"]`);
-                if (!div) {
-                    div = document.createElement('div'); div.className = 'node'; div.dataset.id = node.id;
-                    div.addEventListener('click', (e) => { if (!dragTargetId) handleNodeClick(node.id); });
-                    div.addEventListener('pointerdown', (e) => handlePointerDown(e, node.id));
-                    dynamicLayer.appendChild(div);
-                }
-                div.style.left = pos.x + 'px'; div.style.top = pos.y + 'px'; div.textContent = node.label; div.classList.toggle('selected', selectedNodeId === node.id);
-
+                if (!div) { div = document.createElement('div'); div.className = 'node'; div.dataset.id = node.id; div.addEventListener('click', (e) => { if (!dragTargetId) handleNodeClick(node.id); }); div.addEventListener('pointerdown', (e) => handlePointerDown(e, node.id)); dynamicLayer.appendChild(div); }
+                div.style.left = pos.x + 'px'; div.style.top = pos.y + 'px'; div.textContent = node.label;
                 if (solutions[node.id] && !isConnectMode) {
                     const cloudPos = getRotatedPos(node, 65);
                     let cloud = document.querySelector(`.solution-cloud[data-id="${node.id}"]`);
-                    if (!cloud) {
-                        cloud = document.createElement('div'); cloud.className = 'solution-cloud'; cloud.dataset.id = node.id;
-                        cloud.onclick = (e) => { e.stopPropagation(); openDetail(node.id); }; dynamicLayer.appendChild(cloud);
-                    }
+                    if (!cloud) { cloud = document.createElement('div'); cloud.className = 'solution-cloud'; cloud.dataset.id = node.id; cloud.onclick = (e) => { e.stopPropagation(); openDetail(node.id); }; dynamicLayer.appendChild(cloud); }
                     cloud.style.left = cloudPos.x + 'px'; cloud.style.top = cloudPos.y + 'px'; cloud.textContent = solutions[node.id];
                 }
             });
-
             while (svg.lastChild && svg.lastChild.nodeName !== 'defs') svg.removeChild(svg.lastChild);
             connections.forEach((conn) => {
                 const sNode = nodes.find(n => n.id === conn.source), tNode = nodes.find(n => n.id === conn.target);
                 if (!sNode || !tNode) return;
                 const s = getRotatedPos(sNode), t = getRotatedPos(tNode);
                 const radius = (s.radius + t.radius) / 2;
-                let diff = (t.angle - s.angle) % (2 * Math.PI);
-                if (diff < 0) diff += 2 * Math.PI;
+                let diff = (t.angle - s.angle) % (2 * Math.PI); if (diff < 0) diff += 2 * Math.PI;
                 const largeArc = diff > Math.PI ? 1 : 0;
-                
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 path.setAttribute("d", `M ${s.x} ${s.y} A ${radius} ${radius} 0 ${largeArc} 1 ${t.x} ${t.y}`);
                 path.setAttribute("class", "flow-line"); path.setAttribute("stroke", conn.type === 'S' ? '#10b981' : '#f43f5e');
                 path.setAttribute("marker-end", conn.type === 'S' ? "url(#arrowhead)" : "url(#arrowhead-red)");
                 svg.appendChild(path);
-                
                 const midAngle = s.angle + diff / 2;
-                const lx = getCanvasCenter().x + (radius + 25) * Math.cos(midAngle);
-                const ly = getCanvasCenter().y + (radius + 25) * Math.sin(midAngle);
+                const lx = getCanvasCenter().x + (radius + 25) * Math.cos(midAngle), ly = getCanvasCenter().y + (radius + 25) * Math.sin(midAngle);
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 text.setAttribute("x", lx); text.setAttribute("y", ly);
                 text.setAttribute("class", conn.type === 'S' ? 'label-s' : 'label-o');
                 text.setAttribute("text-anchor", "middle"); text.textContent = conn.type; svg.appendChild(text);
             });
-
-            if (!isConnectMode) {
-                nodes.forEach(node => {
-                    if (solutions[node.id]) {
-                        const nPos = getRotatedPos(node), cPos = getRotatedPos(node, 65);
-                        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                        line.setAttribute("x1", nPos.x); line.setAttribute("y1", nPos.y);
-                        line.setAttribute("x2", cPos.x); line.setAttribute("y2", cPos.y);
-                        line.setAttribute("class", "solution-line"); svg.appendChild(line);
-                    }
-                });
-            }
         }
-
-        function displayRandomHint() {
-            const hint = hintsList[Math.floor(Math.random() * hintsList.length)];
-            const textEl = document.getElementById('hint-text');
-            if (textEl) textEl.innerText = hint.text;
-        }
-
-        function syncLocal() { localStorage.setItem('system_loops_v17_3', JSON.stringify({nodes, connections, solutions})); }
-        function clearCanvas() { if(confirm("データを全リセットしますか？")) { localStorage.removeItem('system_loops_v17_3'); nodes=[]; connections=[]; solutions={}; render(); } }
+        function displayRandomHint() { const hint = hintsList[Math.floor(Math.random() * hintsList.length)]; const textEl = document.getElementById('hint-text'); if (textEl) textEl.innerText = hint.text; }
+        function syncLocal() { localStorage.setItem('system_loops_v17_5', JSON.stringify({nodes, connections, solutions})); }
+        function clearCanvas() { if(confirm("データを全リセットしますか？")) { localStorage.removeItem('system_loops_v17_5'); nodes=[]; connections=[]; solutions={}; render(); } }
     </script>
 </body>
 </html>
