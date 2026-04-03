@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Loop Creator - Cloud Fix v17.2</title>
+    <title>System Loop Creator - Robust Sync v17.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { touch-action: none; overflow: hidden; background-color: #020617; color: #f1f5f9; font-family: sans-serif; }
@@ -100,7 +100,7 @@
             </div>
             <div class="flex flex-col">
                 <h1 class="text-xs font-black text-white tracking-tighter italic text-emerald-400 leading-none">Cloud Orchestrator</h1>
-                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v17.2 cloud fix</span>
+                <span class="text-[7px] text-slate-500 font-black uppercase tracking-[0.3em] mt-1">v17.3 robust sync</span>
             </div>
         </div>
         
@@ -178,7 +178,6 @@
         <button id="connect-btn" onclick="toggleConnectMode()" class="pointer-events-auto px-8 py-3 bg-slate-800/90 text-slate-400 border border-slate-700 rounded-xl font-black text-[10px]">極性切替</button>
     </div>
 
-    <!-- Modals -->
     <div id="node-modal" class="modal p-6"><div class="bg-slate-900 p-8 rounded-[2.5rem] w-full max-w-sm"><h2 class="text-emerald-400 font-black mb-6">New Element</h2><input type="text" id="node-input" class="w-full p-4 bg-slate-800 border border-slate-700 text-white rounded-xl mb-6 text-center" placeholder="..."><div class="flex gap-3"><button onclick="closeNodeModal()" class="flex-1 py-4 text-slate-500 font-bold">CANCEL</button><button onclick="addNode()" class="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black">ADD</button></div></div></div>
     <div id="conn-modal" class="modal p-6"><div class="bg-slate-900 p-8 rounded-[2.5rem] w-full max-w-sm text-center"><h2 class="text-emerald-400 font-black mb-6 italic">Polarity</h2><div class="grid grid-cols-2 gap-4"><button onclick="completeConnection('S')" class="p-6 bg-emerald-950/20 border border-emerald-500/20 rounded-2xl"><div class="text-4xl font-black text-emerald-500">S</div></button><button onclick="completeConnection('O')" class="p-6 bg-red-950/20 border border-red-500/20 rounded-2xl"><div class="text-4xl font-black text-red-500">O</div></button></div></div></div>
 
@@ -200,9 +199,7 @@
         let currentDetailNodeId = null;
         let dragTargetId = null;
         
-        // プロジェクトキャッシュ（エスケープ問題を回避するため）
         let cloudProjectCache = [];
-        
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyo1o9FAANNVckA2HFtsxiC8PjOjytLCzTGs0bVuAZqYoLrMcxxckUO27uzJM38gi_6Gg/exec";
         let gasUrl = localStorage.getItem('gas_url') || DEFAULT_GAS_URL;
 
@@ -210,7 +207,7 @@
         const svg = document.getElementById('svg-layer');
 
         window.onload = () => {
-            const saved = localStorage.getItem('system_loops_v17_2');
+            const saved = localStorage.getItem('system_loops_v17_3');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
@@ -327,53 +324,67 @@
                 return;
             }
             
-            listEl.innerHTML = '<div class="text-center py-10 text-slate-600 text-xs italic">取得中...</div>';
+            listEl.innerHTML = '<div class="text-center py-10 text-slate-600 text-xs italic">同期中...</div>';
             
             try {
                 const res = await fetch(gasUrl, { redirect: 'follow' });
-                const list = await res.json();
+                let rawData = await res.json();
                 
-                if (!Array.isArray(list)) {
-                    console.error("Expected array but got:", list);
-                    listEl.innerHTML = '<div class="text-center py-10 text-red-400 text-xs italic">データの形式が正しくありません</div>';
+                // --- Robust Parsing Engine ---
+                let list = null;
+                
+                // 文字列で届いた場合の再パース
+                if (typeof rawData === 'string') {
+                    try { rawData = JSON.parse(rawData); } catch(e) {}
+                }
+
+                // 配列そのものか、オブジェクト内の配列かを探す
+                if (Array.isArray(rawData)) {
+                    list = rawData;
+                } else if (rawData && typeof rawData === 'object') {
+                    // 一般的なデータ格納キーを探索
+                    list = rawData.projects || rawData.data || rawData.list || Object.values(rawData).find(v => Array.isArray(v));
+                }
+
+                if (!list || !Array.isArray(list)) {
+                    console.error("Format mismatch. Received:", rawData);
+                    listEl.innerHTML = `<div class="text-center py-10 text-red-400 text-xs italic">データの形式が正しくありません<br><span class="text-[8px] opacity-50">Received: ${typeof rawData}</span></div>`;
                     return;
                 }
 
-                cloudProjectCache = list; // キャッシュに保存
-                
+                cloudProjectCache = list; 
                 listEl.innerHTML = list.length === 0 ? '<div class="text-center py-10 text-slate-600 text-xs">保存されたプロジェクトはありません</div>' : "";
                 
-                // 新しい順に表示
                 [...list].reverse().forEach((item, index) => {
-                    const actualIndex = list.length - 1 - index; // 元の配列でのインデックス
+                    const actualIndex = list.length - 1 - index;
                     const div = document.createElement('div'); 
                     div.className = 'cloud-item';
-                    const date = item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown Date";
+                    const date = item.timestamp ? new Date(item.timestamp).toLocaleString('ja-JP', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : "日付不明";
                     
                     div.innerHTML = `
                         <div class="flex flex-col">
-                            <span class="text-emerald-400 font-bold text-sm">${item.title || "Untitled"}</span>
+                            <span class="text-emerald-400 font-bold text-sm truncate max-w-[150px]">${item.title || "無題"}</span>
                             <span class="text-[8px] text-slate-500 font-bold">${date}</span>
                         </div>
                         <button onclick="loadFromCache(${actualIndex})" class="px-4 py-2 bg-slate-800 text-emerald-400 rounded-lg text-[10px] font-black border border-emerald-500/20">LOAD</button>
                     `;
                     listEl.appendChild(div);
                 });
-                showToast("データ同期完了");
+                showToast("クラウドと同期しました");
             } catch (e) { 
-                console.error("Fetch Error:", e);
-                listEl.innerHTML = `<div class="text-center py-10 text-red-400 text-xs italic">通信エラーが発生しました。<br>URLが正しいか確認してください。</div>`; 
+                console.error("Sync Error:", e);
+                listEl.innerHTML = `<div class="text-center py-10 text-red-400 text-xs italic">通信エラー<br><span class="text-[8px] opacity-50">${e.message}</span></div>`; 
             }
         }
 
         function loadFromCache(index) {
             const project = cloudProjectCache[index];
             if (!project || !project.data) {
-                showToast("プロジェクトデータの読み込みに失敗しました");
+                showToast("データの整合性が確認できません");
                 return;
             }
             
-            const data = project.data;
+            const data = typeof project.data === 'string' ? JSON.parse(project.data) : project.data;
             nodes = data.nodes || []; 
             connections = data.connections || []; 
             solutions = data.solutions || {};
@@ -382,39 +393,33 @@
             render(); 
             syncLocal(); 
             closeCloudManager(); 
-            showToast("「" + project.title + "」を読み込みました");
+            showToast("「" + project.title + "」を展開しました");
         }
 
         async function saveToCloud() {
             const title = document.getElementById('save-title').value.trim(); 
-            if (!title) {
-                showToast("タイトルを入力してください");
-                return;
-            }
+            if (!title) { showToast("タイトルを入力してください"); return; }
             
             const btn = document.getElementById('save-btn');
             btn.innerText = "SAVING..."; btn.disabled = true;
             
             try {
-                // mode: 'no-cors'はGASの仕様上必要ですが、レスポンスの中身は読めません。
-                // そのため成功を仮定して1秒後にリストを更新します。
+                // 文字列化して送信（エスケープ問題を回避）
+                const payload = JSON.stringify({ title, data: { nodes, connections, solutions } });
                 await fetch(gasUrl, { 
                     method: 'POST', 
                     mode: 'no-cors', 
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, data: { nodes, connections, solutions } }) 
+                    body: payload
                 });
                 
                 setTimeout(() => { 
-                    btn.innerText = "SAVE PROJECT"; 
-                    btn.disabled = false; 
+                    btn.innerText = "SAVE PROJECT"; btn.disabled = false; 
                     fetchCloudList(); 
-                    showToast("保存リクエストを送信しました"); 
-                }, 1000);
+                    showToast("保存完了しました"); 
+                }, 1200);
             } catch (e) { 
-                showToast("保存に失敗しました"); 
-                btn.disabled = false; 
-                console.error("Save Error:", e);
+                showToast("通信失敗"); btn.disabled = false; 
             }
         }
 
@@ -423,10 +428,9 @@
         function openSettings() { document.getElementById('settings-view').classList.add('active-view'); }
         function closeSettings() { document.getElementById('settings-view').classList.remove('active-view'); }
         function saveSettings() { 
-            gasUrl = document.getElementById('gas-url-input').value; 
+            gasUrl = document.getElementById('gas-url-input').value.trim(); 
             localStorage.setItem('gas_url', gasUrl); 
-            showToast("URL設定を保存しました"); 
-            closeSettings(); 
+            showToast("設定を更新しました"); closeSettings(); 
         }
         function openNodeModal() { document.getElementById('node-modal').classList.add('active'); setTimeout(() => document.getElementById('node-input').focus(), 100); }
         function closeNodeModal() { document.getElementById('node-modal').classList.remove('active'); document.getElementById('node-input').value = ''; }
@@ -435,9 +439,7 @@
             if (!label) return; 
             nodes.push({ id: Date.now(), label, isDragged: false }); 
             distributeNodes(true); 
-            closeNodeModal(); 
-            render(); 
-            showToast("最適配置で追加しました");
+            closeNodeModal(); render(); showToast("要素を追加しました");
         }
 
         function toggleConnectMode() {
@@ -461,15 +463,11 @@
             document.getElementById('detail-view').classList.add('active-view');
         }
         function closeDetail() { document.getElementById('detail-view').classList.remove('active-view'); render(); }
-        function saveSolution() { if (currentDetailNodeId) { solutions[currentDetailNodeId] = document.getElementById('solution-input').value; syncLocal(); closeDetail(); showToast("データ保存"); } }
+        function saveSolution() { if (currentDetailNodeId) { solutions[currentDetailNodeId] = document.getElementById('solution-input').value; syncLocal(); closeDetail(); showToast("アクションを保存"); } }
         function deleteCurrentNode() {
             nodes = nodes.filter(n => n.id !== currentDetailNodeId);
             connections = connections.filter(c => c.source !== currentDetailNodeId && c.target !== currentDetailNodeId);
-            delete solutions[currentDetailNodeId]; 
-            distributeNodes(true); 
-            syncLocal(); 
-            closeDetail();
-            showToast("削除と再配置を完了");
+            delete solutions[currentDetailNodeId]; distributeNodes(true); syncLocal(); closeDetail();
         }
 
         function completeConnection(type) {
@@ -555,8 +553,8 @@
             if (textEl) textEl.innerText = hint.text;
         }
 
-        function syncLocal() { localStorage.setItem('system_loops_v17_2', JSON.stringify({nodes, connections, solutions})); }
-        function clearCanvas() { if(confirm("全リセットしますか？")) { localStorage.removeItem('system_loops_v17_2'); nodes=[]; connections=[]; solutions={}; render(); } }
+        function syncLocal() { localStorage.setItem('system_loops_v17_3', JSON.stringify({nodes, connections, solutions})); }
+        function clearCanvas() { if(confirm("データを全リセットしますか？")) { localStorage.removeItem('system_loops_v17_3'); nodes=[]; connections=[]; solutions={}; render(); } }
     </script>
 </body>
 </html>
