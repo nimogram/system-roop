@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>System Loop Creator v23.5</title>
+    <title>System Loop Creator v23.7</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -25,7 +25,7 @@
             --radius-lg: 20px;
             --radius-md: 14px;
             --header-h: 58px;
-            --banner-h: 46px;
+            --banner-h: 60px; /* Slightly taller for larger font */
         }
 
         body {
@@ -58,48 +58,25 @@
             background: var(--c);
             border-radius: 10px;
             display: grid; place-items: center;
-            transition: background 0.4s;
         }
         .brand-icon svg { width: 17px; height: 17px; color: #050c1a; }
-
-        .brand-name {
-            font-family: 'Syne', sans-serif;
-            font-size: 13px; font-weight: 900;
-            color: var(--c);
-            letter-spacing: -0.3px; line-height: 1;
-        }
-        .brand-sub {
-            font-size: 8px; color: var(--mute);
-            font-weight: 700; letter-spacing: 1.5px;
-            text-transform: uppercase; margin-top: 2px;
-        }
+        .brand-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 900; color: var(--c); letter-spacing: -0.3px; line-height: 1; }
+        .brand-sub { font-size: 8px; color: var(--mute); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
 
         .hacts { display: flex; align-items: center; gap: 6px; }
         .hbtn {
             height: 30px; padding: 0 10px;
-            background: transparent;
-            border: 1px solid var(--c);
-            border-radius: 8px;
-            color: var(--c);
-            font-family: 'Space Mono', monospace;
-            font-size: 9px; font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s;
+            background: transparent; border: 1px solid var(--c); border-radius: 8px;
+            color: var(--c); font-family: 'Space Mono', monospace;
+            font-size: 9px; font-weight: 700; text-transform: uppercase;
+            cursor: pointer; transition: all 0.2s;
         }
-        .hbtn:hover, .hbtn.lit { background: var(--c); color: var(--bg); }
+        .hbtn:hover { background: var(--c); color: var(--bg); }
         .hbtn-ic { width: 30px; padding: 0; border-radius: 50%; display: grid; place-items: center; }
+        .hbtn-sett { border-color: var(--sett) !important; color: var(--sett) !important; }
+        .hbtn-sett:hover { background: var(--sett) !important; color: var(--bg) !important; }
 
-        .hbtn-sett {
-            border-color: var(--sett) !important;
-            color: var(--sett) !important;
-        }
-        .hbtn-sett:hover {
-            background: var(--sett) !important;
-            color: var(--bg) !important;
-        }
-
-        /* HINT BANNER */
+        /* HINT BANNER (Updated font size) */
         #hint-banner {
             height: var(--banner-h);
             background: var(--bg2);
@@ -108,12 +85,16 @@
             padding: 0 20px; flex-shrink: 0;
             position: relative;
         }
-        #hint-banner::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-            width: 3px; background: var(--c);
+        #hint-banner::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
+        #hint-text { 
+            font-size: 13px; /* Increased from 10px */
+            font-weight: 700; 
+            color: var(--c); 
+            text-align: center; 
+            line-height: 1.5; 
+            max-width: 85%;
         }
-        #hint-text { font-size: 10px; font-weight: 700; color: var(--c); text-align: center; line-height: 1.5; }
-        #hint-cursor { display: inline-block; width: 2px; height: 11px; background: var(--c); margin-left: 2px; vertical-align: middle; animation: blink 1s infinite; }
+        #hint-cursor { display: inline-block; width: 2px; height: 14px; background: var(--c); margin-left: 2px; vertical-align: middle; animation: blink 1s infinite; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
         /* CANVAS */
@@ -126,7 +107,7 @@
         #dynamic-layer { position: absolute; inset: 0; }
         #svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 
-        /* NODES (Gradient border) */
+        /* NODES */
         .node {
             position: absolute;
             padding: 10px 18px;
@@ -134,35 +115,24 @@
                         linear-gradient(135deg, var(--cl), var(--c)) border-box;
             border: 2.5px solid transparent;
             border-radius: var(--radius-pill);
-            font-family: sans-serif;
-            font-size: 12px; font-weight: 800;
+            font-family: sans-serif; font-size: 12px; font-weight: 800;
             color: #fff; text-align: center;
             white-space: nowrap; user-select: none;
             cursor: grab; z-index: 30;
             transform: translate(-50%, -50%);
             min-width: 95px;
             box-shadow: 0 6px 24px rgba(0,0,0,0.6);
-            transition: box-shadow 0.2s;
         }
         .node.dragging { 
-            background: linear-gradient(var(--surface), var(--surface)) padding-box,
-                        linear-gradient(135deg, #fff, #fff) border-box;
+            background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(135deg, #fff, #fff) border-box;
             box-shadow: 0 0 35px rgba(255,255,255,0.25); 
-            transition: none; 
         }
-        .node.sel { 
-            background: linear-gradient(var(--c), var(--c)) padding-box,
-                        linear-gradient(135deg, #fff, var(--cl)) border-box;
-            color: var(--bg); 
-        }
+        .node.sel { background: linear-gradient(var(--c), var(--c)) padding-box, linear-gradient(135deg, #fff, var(--cl)) border-box; color: var(--bg); }
 
         .node-dot {
             position: absolute; top: -6px; right: -6px;
-            width: 14px; height: 14px;
-            background: var(--cl); border-radius: 50%;
-            border: 2px solid var(--bg);
-            box-shadow: 0 0 12px var(--cl);
-            z-index: 35;
+            width: 14px; height: 14px; background: var(--cl); border-radius: 50%;
+            border: 2px solid var(--bg); box-shadow: 0 0 12px var(--cl); z-index: 35;
         }
 
         /* INSERT BTN */
@@ -171,35 +141,21 @@
             background: var(--c); border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             color: var(--bg); font-size: 15px; font-weight: 900;
-            z-index: 40; cursor: pointer;
-            transform: translate(-50%, -50%);
-            line-height: 1;
+            z-index: 40; cursor: pointer; transform: translate(-50%, -50%);
             box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
         }
 
         /* ACTION PLAN CLOUDS */
         .sol-cloud {
-            position: absolute;
-            padding: 8px 16px;
-            background: rgba(11, 22, 40, 0.9);
-            border: 1.5px dashed var(--c);
-            border-radius: 14px;
-            color: #fff;
-            font-size: 12px;
-            font-family: sans-serif;
-            font-weight: 600;
-            max-width: 180px; text-align: center;
-            z-index: 25; cursor: pointer;
-            transform: translate(-50%, -50%);
-            backdrop-filter: blur(10px);
+            position: absolute; padding: 8px 16px;
+            background: rgba(11, 22, 40, 0.9); border: 1.5px dashed var(--c); border-radius: 14px;
+            color: #fff; font-size: 12px; font-family: sans-serif; font-weight: 600;
+            max-width: 180px; text-align: center; z-index: 25; cursor: pointer;
+            transform: translate(-50%, -50%); backdrop-filter: blur(10px);
             box-shadow: 0 6px 18px rgba(0,0,0,0.5);
-            transition: opacity 0.3s;
-            pointer-events: auto;
         }
 
-        /* Tapered Paths */
         .flow-line-filled { stroke: none; opacity: 0.95; }
-
         .lbl-s { fill: var(--cl); font-family: sans-serif; font-weight:900; font-size:13px; filter:drop-shadow(0 0 3px #000); }
         .lbl-o { fill: #f87171; font-family: sans-serif; font-weight:900; font-size:13px; filter:drop-shadow(0 0 3px #000); }
 
@@ -207,7 +163,6 @@
         .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.12); transition: all 0.3s; }
         .dot.on { background: var(--c); transform: scale(1.4); }
 
-        /* FIXED BUTTONS */
         .fab {
             position: fixed; bottom: 22px; right: 18px;
             width: 56px; height: 56px; border-radius: 50%;
@@ -215,27 +170,18 @@
             background: var(--c); color: var(--bg);
             font-size: 28px; font-weight: 900;
             cursor: pointer; z-index: 100;
-            box-shadow: 0 8px 28px rgba(0,0,0,0.5);
-            border: none;
-            transition: transform 0.1s;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.5); border: none;
         }
-        .fab:active { transform: scale(0.95); }
 
         .btn-reset-fixed {
             position: fixed; bottom: 22px; left: 18px;
             height: 34px; padding: 0 14px;
-            background: transparent;
-            border: 1.5px solid var(--danger);
-            border-radius: 10px;
-            color: var(--danger);
-            font-family: 'Space Mono', monospace;
-            font-size: 10px; font-weight: 700;
-            letter-spacing: 1px;
-            cursor: pointer; z-index: 100;
-            transition: all 0.2s;
+            background: transparent; border: 1.5px solid var(--danger); border-radius: 10px;
+            color: var(--danger); font-family: 'Space Mono', monospace;
+            font-size: 10px; font-weight: 700; letter-spacing: 1px;
+            cursor: pointer; z-index: 100; transition: all 0.2s;
         }
         .btn-reset-fixed:hover { background: var(--danger); color: var(--bg); box-shadow: 0 0 15px rgba(248, 113, 113, 0.4); }
-        .btn-reset-fixed:active { transform: scale(0.95); }
 
         #bot-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 20px 16px; display: flex; justify-content: center; pointer-events: none; z-index: 90; }
         #conn-btn { pointer-events: auto; padding: 10px 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--mute); font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 700; cursor: pointer; backdrop-filter: blur(16px); }
@@ -245,7 +191,6 @@
         .toast { background: var(--c); color: var(--bg); padding: 9px 20px; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 900; font-size: 11px; text-transform: uppercase; animation: tin 0.25s cubic-bezier(0.34,1.56,0.64,1); }
         @keyframes tin { from{transform:translateY(-18px);opacity:0} to{transform:translateY(0);opacity:1} }
 
-        /* VIEWS */
         .view { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 300; overflow-y: auto; }
         .view.open { display: block; }
         .v-inner { max-width: 420px; margin: 0 auto; padding: 20px 20px 70px; }
@@ -255,23 +200,14 @@
         .card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 12px; }
         .flabel { font-size: 9px; font-weight: 700; color: var(--mute); margin-bottom: 8px; display: block; }
 
-        input[type="text"], textarea { width: 100%; background: var(--bg2) !important; border: 1.5px solid var(--border) !important; border-radius: var(--radius-md) !important; padding: 13px 15px !important; color: var(--text) !important; font-family: 'Space Mono', monospace !important; font-size: 13px !important; outline: none; resize: none; }
-        input[type="text"]:focus, textarea:focus { border-color: var(--c) !important; }
-
-        .plan-item { display: flex; align-items: center; gap: 10px; background: var(--bg2); padding: 10px; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--border); }
-        .plan-item span { flex: 1; font-size: 11px; }
-        .plan-del { color: #f87171; cursor: pointer; font-size: 14px; font-weight: 900; }
-
-        .btn-p { width: 100%; padding: 15px; background: var(--c); color: var(--bg); border: none; border-radius: var(--radius-md); font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 900; cursor: pointer; }
-        .btn-g { width: 100%; padding: 12px; background: transparent; color: var(--mute); border: 1.5px solid var(--border); border-radius: var(--radius-md); font-size: 9px; font-weight: 700; cursor: pointer; }
-        .btn-d { width: 100%; padding: 12px; background: transparent; color: #f87171; border: 1.5px solid rgba(248,113,113,0.2); border-radius: var(--radius-md); font-size: 9px; font-weight: 700; cursor: pointer; }
+        input[type="text"] { width: 100%; background: var(--bg2) !important; border: 1.5px solid var(--border) !important; border-radius: var(--radius-md) !important; padding: 13px 15px !important; color: var(--text) !important; font-family: 'Space Mono', monospace !important; font-size: 13px !important; outline: none; }
+        input[type="text"]:focus { border-color: var(--c) !important; }
 
         .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 400; align-items: center; justify-content: center; padding: 20px; }
         .overlay.open { display: flex; }
         .ov-card { background: var(--bg2); border: 2.2px solid var(--c); border-radius: 24px; padding: 28px; width: 100%; max-width: 360px; }
         .ov-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 900; color: var(--c); text-align: center; margin-bottom: 18px; }
         .ov-acts { display: flex; gap: 10px; }
-        .btn-cancel { flex: 0 0 76px; padding: 15px; background: transparent; color: var(--mute); border: 1.5px solid var(--border); border-radius: var(--radius-md); font-size: 9px; font-weight: 700; cursor: pointer; }
 
         #empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; pointer-events: none; }
         .em-ring { width: 54px; height: 54px; border: 2px dashed var(--mute); border-radius: 50%; display: grid; place-items: center; opacity: 0.35; }
@@ -291,13 +227,12 @@
         </div>
     </div>
     <div class="hacts">
+        <button class="hbtn" onclick="switchT(tracks.length)">New</button>
         <button class="hbtn" onclick="alignOrbit(true)">Align</button>
         <button class="hbtn" id="rot-btn" onclick="toggleRot()">Stop</button>
         <button class="hbtn" onclick="openCloud()">Sync</button>
         <button class="hbtn hbtn-ic hbtn-sett" onclick="openSettings()" aria-label="Settings">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
     </div>
 </header>
@@ -323,10 +258,10 @@
 <div id="toasts"></div>
 <div id="bot-bar"><button id="conn-btn" onclick="toggleConn()">Polarity Swap</button></div>
 
-<!-- FIXED BUTTONS -->
 <button class="btn-reset-fixed" onclick="openReset()">RESET</button>
 <button class="fab" onclick="openNodeModal(null)">＋</button>
 
+<!-- Detail View (Multi-Plan) -->
 <div class="view" id="detail-view">
     <div class="v-inner">
         <button class="v-back" onclick="closeDetail()">← Back</button>
@@ -343,13 +278,13 @@
     </div>
 </div>
 
+<!-- Settings & Overlays -->
 <div class="view" id="settings-view">
     <div class="v-inner">
         <button class="v-back" onclick="closeSettings()">← Back</button>
         <div class="v-title" id="sett-title">Settings</div>
         <div class="card"><label class="flabel">Track Name</label><input type="text" id="tname-inp"><div class="gap"></div><button class="btn-p" onclick="renameTrack()">Rename</button></div>
-        <div class="card"><label class="flabel">Theme Color</label><div class="sw-grid" id="sw-grid"></div><button class="btn-g" onclick="shuffleColor()">Shuffle Random</button></div>
-        <div class="card"><div class="sec-lbl">⚠ Danger Zone</div><button class="btn-d" onclick="openReset()">Reset Track</button></div>
+        <div class="card"><label class="flabel">Theme Color</label><div class="sw-grid" id="sw-grid"></div></div>
     </div>
 </div>
 
@@ -357,7 +292,6 @@
     <div class="v-inner">
         <button class="v-back" onclick="closeCloud()">← Back</button>
         <div class="v-title" id="cloud-title">Cloud Sync</div>
-        <div class="card"><label class="flabel">Project Name</label><input type="text" id="save-title" placeholder="My loop..."><div class="gap"></div><button class="btn-p" id="save-btn" onclick="saveCloud()">Save Track</button></div>
         <div id="cloud-list"></div>
     </div>
 </div>
@@ -376,8 +310,7 @@ const HINTS = ["「同じ問題が形を変えて何度も起きる」時、そ�
 const GAS = 'https://script.google.com/macros/s/AKfycbyo1o9FAANNVckA2HFtsxiC8PjOjytLCzTGs0bVuAZqYoLrMcxxckUO27uzJM38gi_6Gg/exec';
 
 let tracks=[], cur=0, isConn=false, selId=null, isRot=true, rotAng=0, orbitAng=0;
-let dragId=null, detId=null, insAfter=null, txStart=0, cloudCache=[];
-let typingOn=false;
+let dragId=null, detId=null, insAfter=null, txStart=0, typingOn=false;
 
 const $ = id => document.getElementById(id);
 const dyn = $('dynamic-layer');
@@ -385,11 +318,11 @@ const svg = $('svg-layer');
 const defs = $('svg-defs');
 
 window.onload = () => {
-    const raw = localStorage.getItem('slc_v23_5');
+    const raw = localStorage.getItem('slc_v23_7');
     if (raw) { try { tracks = JSON.parse(raw); } catch(e) { tracks=[]; } }
     if (!tracks.length) tracks = [mkT('Track 1')];
     tracks.forEach(t => { if(!t.cp) t.cp = PAL[0]; if(!t.sols) t.sols={}; });
-    renderPager(); applyTheme(); buildSwatches(); typeHint(); setInterval(typeHint, 14000);
+    renderPager(); applyTheme(); typeHint(); setInterval(typeHint, 18000);
     window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp); window.addEventListener('resize', render);
     const cv = $('canvas-container');
     cv.addEventListener('touchstart', e => { txStart = e.touches[0].clientX; }, {passive:true});
@@ -403,44 +336,43 @@ function mkT(name) { return { id: Date.now()+Math.random(), name, nodes:[], conn
 function applyTheme() {
     const t = tracks[cur], c = t.cp; document.documentElement.style.setProperty('--c', c.m); document.documentElement.style.setProperty('--cl', c.l);
     $('bi').style.background = c.m; $('tname').textContent = t.name; $('tname').style.color = c.m;
-    ['cloud-title', 'sett-title', 'detail-lbl', 'inj-title'].forEach(id => $(id).style.color = c.m);
-    $('inj-btn').style.background = c.m; updSwatches();
+    ['detail-lbl', 'inj-title'].forEach(id => $(id).style.color = c.m);
+    $('inj-btn').style.background = c.m;
 }
-function buildSwatches() {
-    const g = $('sw-grid'); g.innerHTML = '';
-    PAL.forEach((c, i) => { const d = document.createElement('div'); d.className = 'sw'; d.style.background = c.m; d.dataset.i = i; d.onclick = () => { tracks[cur].cp = PAL[i]; applyTheme(); syncLocal(); }; g.appendChild(d); });
+
+function typeHint() {
+    typingOn = false; const h = HINTS[Math.floor(Math.random()*HINTS.length)]; 
+    const el = $('hint-text'); el.textContent = ''; let i=0; typingOn=true;
+    function tick() { if (typingOn && i<h.length) { el.textContent+=h[i++]; setTimeout(tick, 250); } } // Slower speed: 250ms
+    tick();
 }
-function updSwatches() { document.querySelectorAll('.sw').forEach(s => s.classList.toggle('on', PAL[+s.dataset.i].m === tracks[cur].cp.m)); }
-function shuffleColor() { tracks[cur].cp = PAL[Math.floor(Math.random()*PAL.length)]; applyTheme(); syncLocal(); toast('Theme updated'); }
+
+function loop() {
+    const anyOpen = document.querySelector('.view.open, .overlay.open');
+    if (isRot && tracks[cur].nodes.length>0 && !anyOpen && !dragId) { rotAng += 0.003; orbitAng -= 0.005; render(); }
+    requestAnimationFrame(loop);
+}
+
+function switchT(idx) { 
+    if (idx < 0 || idx >= 10) return; 
+    while (idx >= tracks.length) tracks.push(mkT(`Track ${tracks.length+1}`));
+    cur = idx; rotAng = 0; orbitAng = 0; applyTheme(); renderPager(); syncLocal(); render(); typeHint(); 
+}
+
 function renderPager() {
     const p = $('pager'); p.innerHTML = '';
     tracks.forEach((t, i) => { const d = document.createElement('div'); d.className = 'dot' + (i===cur?' on':''); if (i===cur) d.style.background = t.cp.m; p.appendChild(d); });
 }
-function switchT(idx) { if (idx < 0 || idx >= 10) return; if (idx >= tracks.length) { tracks.push(mkT(`Track ${tracks.length+1}`)); toast('New track'); } cur = idx; rotAng = 0; orbitAng = 0; applyTheme(); renderPager(); syncLocal(); typeHint(); }
-function typeHint() { typingOn = false; const h = HINTS[Math.floor(Math.random()*HINTS.length)]; const el = $('hint-text'); el.textContent = ''; let i=0; typingOn=true; function tick() { if (typingOn && i<h.length) { el.textContent+=h[i++]; setTimeout(tick, 100); } } tick(); }
 
-function loop() {
-    const anyOpen = document.querySelector('.view.open, .overlay.open');
-    if (isRot && tracks[cur].nodes.length>0 && !anyOpen && !dragId) { 
-        rotAng += 0.003; 
-        orbitAng -= 0.005;
-        render(); 
-    }
-    requestAnimationFrame(loop);
-}
-function toggleRot() { isRot = !isRot; $('rot-btn').textContent = isRot ? 'Stop' : 'Rotate'; $('rot-btn').classList.toggle('lit', !isRot); }
 function ctr() { const c = $('canvas-container'); return { x: c.clientWidth/2, y: c.clientHeight/2 }; }
 function pos(node, extra=0) { const c = ctr(), r=(node.radius||0)+extra; const a = (node.baseAngle||0)+(isRot?rotAng:0); return { x: c.x+r*Math.cos(a), y: c.y+r*Math.sin(a), a, r }; }
-function distribute(all=false) { const t = tracks[cur]; if (!t.nodes.length) return; const c = ctr(), r = Math.min(c.x,c.y)*0.75; t.nodes.forEach((n,i) => { if (all || n.baseAngle===undefined) { n.baseAngle = (i/t.nodes.length)*2*Math.PI; n.radius = r; if (all) n.isDragged=false; } }); autoConn(); }
+function distribute(all=false) { const t = tracks[cur]; if (!t.nodes.length) return; const c = ctr(), r = Math.min(c.x,c.y)*0.75; t.nodes.forEach((n,i) => { if (all || n.baseAngle===undefined) { n.baseAngle = (i/t.nodes.length)*2*Math.PI; n.radius = r; } }); autoConn(); }
 function alignOrbit(all=true) { distribute(all); rotAng=0; render(); syncLocal(); toast('Aligned'); }
 function autoConn() {
     const t = tracks[cur]; if (t.nodes.length<2) { t.conns=[]; return; }
     const tm={}; t.conns.forEach(c => { tm[`${c.s}-${c.t}`]=c.type; });
     t.conns = t.nodes.map((n,i) => { const s=n.id, t2=t.nodes[(i+1)%t.nodes.length].id; return { id:`${s}-${t2}`, s, t:t2, type: tm[`${s}-${t2}`]||'S' }; });
 }
-function onDown(e, id) { if (isConn) return; dragId=id; document.querySelector(`.node[data-id="${id}"]`)?.classList.add('dragging'); }
-function onMove(e) { if (!dragId) return; const rect = $('canvas-container').getBoundingClientRect(), c=ctr(); const dx=e.clientX-rect.left-c.x, dy=e.clientY-rect.top-c.y; const n = tracks[cur].nodes.find(n=>n.id===dragId); if (n) { n.baseAngle=Math.atan2(dy,dx)-(isRot?rotAng:0); n.radius=Math.sqrt(dx*dx+dy*dy); render(); } }
-function onUp() { if (!dragId) return; document.querySelector(`.node[data-id="${dragId}"]`)?.classList.remove('dragging'); dragId=null; const t=tracks[cur]; if (t.nodes.length>=2) { t.nodes.sort((a,b)=>{ let aa=a.baseAngle%(2*Math.PI); if(aa<0)aa+=2*Math.PI; let bb=b.baseAngle%(2*Math.PI); if(bb<0)bb+=2*Math.PI; return aa-bb; }); autoConn(); distribute(true); } syncLocal(); }
 
 function getTaperedPath(s, tg, r, large) {
     const steps = 30; const center = ctr();
@@ -456,8 +388,8 @@ function getTaperedPath(s, tg, r, large) {
 }
 
 function render() {
-    const t=tracks[cur], c=ctr(); const ids=new Set(t.nodes.map(n=>String(n.id)));
-    document.querySelectorAll('.node,.sol-cloud,.ins-btn').forEach(el=>{ if (!ids.has(el.dataset.id)) el.remove(); });
+    const t=tracks[cur], c=ctr(); const activeIds = new Set(t.nodes.map(n => String(n.id)));
+    document.querySelectorAll('.node, .sol-cloud, .ins-btn').forEach(el => { if (!activeIds.has(String(el.dataset.id)) && !el.classList.contains('ins-btn')) el.remove(); if (el.classList.contains('ins-btn')) el.remove(); });
     $('empty').style.display = t.nodes.length===0?'flex':'none';
 
     t.nodes.forEach(n => {
@@ -474,17 +406,11 @@ function render() {
             solList.forEach((planText, i) => {
                 const step = (2 * Math.PI) / solList.length;
                 const cloudAngle = orbitAng + (i * step); 
-                const dist = 78; 
-                const cloudX = p.x + dist * Math.cos(cloudAngle);
-                const cloudY = p.y + dist * Math.sin(cloudAngle);
-                
+                const dist = 78; const cloudX = p.x + dist * Math.cos(cloudAngle); const cloudY = p.y + dist * Math.sin(cloudAngle);
                 let cl = document.querySelector(`.sol-cloud[data-id="${n.id}"][data-idx="${i}"]`);
-                if (!cl) { 
-                    cl = document.createElement('div'); cl.className = 'sol-cloud'; cl.dataset.id = n.id; cl.dataset.idx = i; 
-                    cl.onclick = e => { e.stopPropagation(); openDetail(n.id); }; dyn.appendChild(cl); 
-                }
+                if (!cl) { cl = document.createElement('div'); cl.className = 'sol-cloud'; cl.dataset.id = n.id; cl.dataset.idx = i; cl.onclick = e => { e.stopPropagation(); openDetail(n.id); }; dyn.appendChild(cl); }
                 cl.style.left = cloudX + 'px'; cl.style.top = cloudY + 'px';
-                cl.textContent = planText.length > 22 ? planText.substring(0, 22) + '..' : planText;
+                cl.textContent = planText.length > 20 ? planText.substring(0, 20) + '..' : planText;
             });
             document.querySelectorAll(`.sol-cloud[data-id="${n.id}"]`).forEach(cl => { if (parseInt(cl.dataset.idx) >= solList.length) cl.remove(); });
         } else { document.querySelectorAll(`.sol-cloud[data-id="${n.id}"]`).forEach(cl => cl.remove()); }
@@ -492,7 +418,6 @@ function render() {
 
     while (svg.lastChild && svg.lastChild.nodeName!=='defs') svg.removeChild(svg.lastChild);
     Array.from(defs.querySelectorAll('linearGradient')).forEach(g=>g.remove());
-    document.querySelectorAll('.ins-btn').forEach(b=>b.remove());
 
     const theme=tracks[cur].cp;
     t.conns.forEach(conn=>{
@@ -503,74 +428,46 @@ function render() {
         const grad=document.createElementNS('http://www.w3.org/2000/svg','linearGradient');
         grad.setAttribute('id',gid); grad.setAttribute('gradientUnits','userSpaceOnUse');
         grad.setAttribute('x1',s.x); grad.setAttribute('y1',s.y); grad.setAttribute('x2',tg.x); grad.setAttribute('y2',tg.y);
-        [[0,isS?theme.l:'#fb923c'],[1,isS?theme.m:'#f43f5e']].forEach(([o,col])=>{
-            const st=document.createElementNS('http://www.w3.org/2000/svg','stop');
-            st.setAttribute('offset',o*100+'%'); st.setAttribute('stop-color',col); grad.appendChild(st);
-        });
+        [[0,isS?theme.l:'#fb923c'],[1,isS?theme.m:'#f43f5e']].forEach(([o,col])=>{ const st=document.createElementNS('http://www.w3.org/2000/svg','stop'); st.setAttribute('offset',o*100+'%'); st.setAttribute('stop-color',col); grad.appendChild(st); });
         defs.appendChild(grad);
         const poly = document.createElementNS('http://www.w3.org/2000/svg','path');
-        poly.setAttribute('d', getTaperedPath(s, tg, r, large));
-        poly.setAttribute('fill', `url(#${gid})`); poly.setAttribute('class', 'flow-line-filled');
-        svg.appendChild(poly);
-        const head = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-        const headSize = 13;
+        poly.setAttribute('d', getTaperedPath(s, tg, r, large)); poly.setAttribute('fill', `url(#${gid})`); poly.setAttribute('class', 'flow-line-filled'); svg.appendChild(poly);
+        const head = document.createElementNS('http://www.w3.org/2000/svg','polygon'); const headSize = 13;
         const p1 = { x: tg.x + headSize * Math.cos(tg.a), y: tg.y + headSize * Math.sin(tg.a) };
         const p2 = { x: tg.x + (headSize/2) * Math.cos(tg.a + 2.5), y: tg.y + (headSize/2) * Math.sin(tg.a + 2.5) };
         const p3 = { x: tg.x + (headSize/2) * Math.cos(tg.a - 2.5), y: tg.y + (headSize/2) * Math.sin(tg.a - 2.5) };
         head.setAttribute('points', `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
         head.setAttribute('fill', isS?theme.m:'#f43f5e'); svg.appendChild(head);
         const midA=s.a+diff/2; const mx=c.x+r*Math.cos(midA), my=c.y+r*Math.sin(midA);
-        if (!isConn) {
-            const btn=document.createElement('div'); btn.className='ins-btn'; btn.dataset.id=conn.s;
-            btn.textContent='+'; btn.style.left=mx+'px'; btn.style.top=my+'px'; btn.onclick=()=>openNodeModal(conn.s); dyn.appendChild(btn);
-        }
+        if (!isConn) { const btn=document.createElement('div'); btn.className='ins-btn'; btn.dataset.id=conn.s; btn.textContent='+'; btn.style.left=mx+'px'; btn.style.top=my+'px'; btn.onclick=()=>openNodeModal(conn.s); dyn.appendChild(btn); }
         const lx=c.x+(r+30)*Math.cos(midA), ly=c.y+(r+30)*Math.sin(midA);
-        const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
-        txt.setAttribute('x',lx); txt.setAttribute('y',ly); txt.setAttribute('class',isS?'lbl-s':'lbl-o');
-        txt.setAttribute('text-anchor','middle'); txt.setAttribute('dominant-baseline','middle');
-        txt.textContent=conn.type; svg.appendChild(txt);
+        const txt=document.createElementNS('http://www.w3.org/2000/svg','text'); txt.setAttribute('x',lx); txt.setAttribute('y',ly); txt.setAttribute('class',isS?'lbl-s':'lbl-o'); txt.setAttribute('text-anchor','middle'); txt.setAttribute('dominant-baseline','middle'); txt.textContent=conn.type; svg.appendChild(txt);
     });
 }
 
-function nodeClick(id) { if (isConn) { if (!selId) { selId=id; $('conn-btn').textContent='Link to...'; } else if (selId!==id) { const type=confirm('極性を選択\nOK → S（同方向）\nキャンセル → O（逆方向）')?'S':'O'; const cn=tracks[cur].conns.find(c=>c.s===selId&&c.t===id); if (cn) cn.type=type; toggleConn(); render(); syncLocal(); } } else openDetail(id); }
+function nodeClick(id) { if (isConn) { if (!selId) { selId=id; $('conn-btn').textContent='Link to...'; } else if (selId!==id) { const type=confirm('極性を選択\nOK → S\nキャンセル → O')?'S':'O'; const cn=tracks[cur].conns.find(c=>c.s===selId&&c.t===id); if (cn) cn.type=type; toggleConn(); render(); syncLocal(); } } else openDetail(id); }
 function toggleConn() { isConn=!isConn; selId=null; const b=$('conn-btn'); b.classList.toggle('on',isConn); b.textContent=isConn?'Select target...':'Polarity Swap'; render(); }
+function onDown(e, id) { if (isConn) return; dragId=id; document.querySelector(`.node[data-id="${id}"]`)?.classList.add('dragging'); }
+function onMove(e) { if (!dragId) return; const rect = $('canvas-container').getBoundingClientRect(), c=ctr(); const dx=e.clientX-rect.left-c.x, dy=e.clientY-rect.top-c.y; const n = tracks[cur].nodes.find(n=>n.id===dragId); if (n) { n.baseAngle=Math.atan2(dy,dx)-(isRot?rotAng:0); n.radius=Math.sqrt(dx*dx+dy*dy); render(); } }
+function onUp() { if (!dragId) return; dragId=null; distribute(true); syncLocal(); }
 function openNodeModal(after=null) { insAfter=after; $('node-ov').classList.add('open'); setTimeout(()=>$('node-inp').focus(),80); }
 function closeNodeModal() { $('node-ov').classList.remove('open'); $('node-inp').value=''; }
-function addNode() { const lbl=$('node-inp').value.trim(); if(!lbl) return; const t=tracks[cur], n={id:Date.now(),label:lbl,isDragged:false}; if (insAfter) { const idx=t.nodes.findIndex(n=>n.id===insAfter); t.nodes.splice(idx+1,0,n); } else t.nodes.push(n); distribute(true); closeNodeModal(); render(); toast('Injected'); syncLocal(); }
-function openDetail(id) { const t=tracks[cur], n=t.nodes.find(n=>n.id===id); if(!n) return; detId=id; $('detail-lbl').textContent=n.label; refreshPlanList(); $('detail-view').classList.add('open'); }
+function addNode() { const lbl=$('node-inp').value.trim(); if(!lbl) return; const t=tracks[cur], n={id:Date.now(),label:lbl}; if (insAfter) { const idx=t.nodes.findIndex(n=>n.id===insAfter); t.nodes.splice(idx+1,0,n); } else t.nodes.push(n); distribute(true); closeNodeModal(); render(); toast('Injected'); syncLocal(); }
+function openDetail(id) { detId=id; const n=tracks[cur].nodes.find(n=>n.id===id); $('detail-lbl').textContent=n.label; refreshPlanList(); $('detail-view').classList.add('open'); }
 function closeDetail() { $('detail-view').classList.remove('open'); render(); }
 function refreshPlanList() { const list = $('plan-list'); list.innerHTML = ''; const plans = tracks[cur].sols[detId] || []; plans.forEach((p, i) => { const d = document.createElement('div'); d.className = 'plan-item'; d.innerHTML = `<span>${p}</span><div class="plan-del" onclick="removePlan(${i})">×</div>`; list.appendChild(d); }); }
 function addPlanToList() { const val = $('new-plan-inp').value.trim(); if (!val) return; if (!tracks[cur].sols[detId]) tracks[cur].sols[detId] = []; tracks[cur].sols[detId].push(val); $('new-plan-inp').value = ''; refreshPlanList(); syncLocal(); toast('Added'); }
 function removePlan(idx) { tracks[cur].sols[detId].splice(idx, 1); refreshPlanList(); syncLocal(); }
-function delNode() { if (!confirm('削除しますか?')) return; const t=tracks[cur]; t.nodes=t.nodes.filter(n=>n.id!==detId); t.conns=t.conns.filter(c=>c.s!==detId&&c.t!==detId); delete t.sols[detId]; distribute(true); syncLocal(); closeDetail(); }
-function openCloud() { $('cloud-view').classList.add('open'); fetchCloud(); }
-function closeCloud() { $('cloud-view').classList.remove('open'); }
+function delNode() { if (!confirm('削除しますか?')) return; tracks[cur].nodes=tracks[cur].nodes.filter(n=>n.id!==detId); distribute(true); syncLocal(); closeDetail(); }
 function openSettings() { $('settings-view').classList.add('open'); $('tname-inp').value = tracks[cur].name; }
 function closeSettings() { $('settings-view').classList.remove('open'); }
+function renameTrack() { const v=$('tname-inp').value.trim(); if(!v) return; tracks[cur].name=v; applyTheme(); syncLocal(); closeSettings(); toast('Renamed'); }
 function openReset() { $('reset-ov').classList.add('open'); }
 function closeReset() { $('reset-ov').classList.remove('open'); }
-function clearCanvas() { tracks[cur]=mkT(`Track ${cur+1}`); closeReset(); closeSettings(); applyTheme(); render(); toast('Reset'); syncLocal(); }
-function renameTrack() { const v=$('tname-inp').value.trim(); if(!v) return; tracks[cur].name=v; applyTheme(); renderPager(); syncLocal(); closeSettings(); toast('Renamed'); }
-
-async function fetchCloud() {
-    const list=$('cloud-list'); list.innerHTML='<div style="text-align:center;padding:28px 0;font-size:10px;color:var(--mute)">Syncing...</div>';
-    try { const res=await fetch(GAS); const data=await res.json(); cloudCache=Array.isArray(data)?data:(data.data||[]); list.innerHTML=''; if (!cloudCache.length) { list.innerHTML='<div style="text-align:center;padding:28px 0;font-size:10px;color:var(--mute)">No saved tracks</div>'; return; }
-        [...cloudCache].reverse().forEach((item,ri)=>{ const ai=cloudCache.length-1-ri; const el=document.createElement('div'); el.className='ci'; el.innerHTML=`<div><div class="ci-name">${item.title||'Untitled'}</div><div class="ci-date">${item.timestamp?new Date(item.timestamp).toLocaleDateString('ja-JP'):''}</div></div><button class="ci-btn" onclick="loadCloud(${ai})">Load</button>`; list.appendChild(el); });
-    } catch { list.innerHTML='<div style="text-align:center;padding:28px 0;font-size:10px;color:#f87171">Sync failed</div>'; }
-}
-async function saveCloud() {
-    const title=$('save-title').value.trim(); if(!title){toast('Name required');return;} const btn=$('save-btn'); btn.disabled=true; btn.textContent='Saving...';
-    try { await fetch(GAS,{method:'POST',body:JSON.stringify({title,data:tracks[cur]})}); toast('Synced'); setTimeout(()=>{btn.disabled=false;btn.textContent='Save Track';fetchCloud();},800); } catch { toast('Error'); btn.disabled=false; btn.textContent='Save Track'; }
-}
-function loadCloud(idx) {
-    const item=cloudCache[idx]; if(!item?.data) return; tracks[cur]=item.data; if (!tracks[cur].cp) tracks[cur].cp=PAL[0]; if(!tracks[cur].sols) tracks[cur].sols={};
-    applyTheme(); syncLocal(); closeCloud(); toast('Loaded');
-}
-function toast(msg) {
-    const el=document.createElement('div'); el.className='toast'; el.textContent=msg; el.style.background=tracks[cur].cp.m;
-    $('toasts').appendChild(el); setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(-14px)';setTimeout(()=>el.remove(),350);},2000);
-}
-function syncLocal() { localStorage.setItem('slc_v23_5', JSON.stringify(tracks)); }
+function clearCanvas() { tracks[cur]=mkT(`Track ${cur+1}`); closeReset(); applyTheme(); render(); syncLocal(); toast('Reset'); }
+function toggleRot() { isRot = !isRot; $('rot-btn').textContent = isRot ? 'Stop' : 'Rotate'; }
+function syncLocal() { localStorage.setItem('slc_v23_7', JSON.stringify(tracks)); }
+function toast(msg) { const el=document.createElement('div'); el.className='toast'; el.textContent=msg; el.style.background=tracks[cur].cp.m; $('toasts').appendChild(el); setTimeout(()=>{el.remove()},2000); }
 </script>
 </body>
 </html>
