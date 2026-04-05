@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>System Loop Creator v25.4</title>
+    <title>System Loop Creator v25.6</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
+            /* Absolute Default: Emerald & Lime */
             --emerald: #10b981;
             --lime: #bef264;
             --c: var(--emerald);
@@ -67,22 +68,21 @@
 
         #hint-banner {
             height: var(--banner-h); background: var(--bg2); border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: center; padding: 0 20px; flex-shrink: 0; position: relative;
+            display: flex; align-items: center; justify-content: center; padding: 0 20px; flex-shrink: 0; position: relative; z-index: 90;
         }
         #hint-banner::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--grad); }
         #hint-text { font-size: 13px; font-weight: 600; color: var(--emerald); text-align: center; line-height: 1.5; max-width: 90%; }
         #hint-cursor { display: inline-block; width: 2px; height: 14px; background: var(--emerald); margin-left: 2px; vertical-align: middle; animation: blink 1s infinite; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        /* CANVAS - Centering Anchor */
+        /* CANVAS - The center is absolute screen center */
         #canvas-container { 
-            flex: 1; 
-            position: relative; 
+            position: fixed; 
+            inset: 0; 
             overflow: hidden; 
-            background: var(--bg); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
+            background: transparent; 
+            z-index: 10;
+            pointer-events: none;
         }
         #canvas-container::before {
             content: ''; position: absolute; inset: 0;
@@ -106,7 +106,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             transition: border-color 0.4s;
         }
-        .node.dragging { z-index: 100; border-color: #fff; }
         .node.sel { border-color: var(--lime); box-shadow: 0 0 15px var(--lime); }
         .node-dot {
             position: absolute; top: -5px; right: -5px;
@@ -133,7 +132,7 @@
             box-shadow: 0 6px 12px rgba(0,0,0,0.5);
         }
 
-        #pager { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 90; }
+        #pager { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 100; }
         .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: all 0.3s; }
         .dot.on { background: var(--emerald); transform: scale(1.5); }
 
@@ -149,7 +148,7 @@
             height: 42px; padding: 0 28px;
             background: rgba(11, 22, 40, 0.85); border: 1.5px solid var(--border); border-radius: var(--radius-pill);
             color: var(--mute); font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 600;
-            cursor: pointer; z-index: 100; backdrop-filter: blur(16px); transition: all 0.3s;
+            cursor: pointer; z-index: 100; backdrop-filter: blur(16px);
         }
         #conn-btn.on { background: var(--grad); color: var(--bg); border-color: transparent; }
 
@@ -184,12 +183,12 @@
             color: var(--text) !important; font-family: 'Space Mono', monospace !important; font-size: 15px !important; outline: none; margin-bottom: 14px;
         }
 
-        #empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; }
+        #empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; z-index: 5; }
         .em-ring { width: 64px; height: 64px; border: 3px dashed var(--mute); border-radius: 50%; display: grid; place-items: center; opacity: 0.4; }
         .em-t { font-family:'Syne',sans-serif; font-size: 16px; font-weight: 700; color: var(--mute); opacity: 0.6; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
 <header>
     <div class="brand">
@@ -202,12 +201,12 @@
         </div>
     </div>
     <div class="hacts">
-        <button class="hbtn" onclick="switchT(tracks.length)">New</button>
+        <button class="hbtn" onclick="newTrack()">New</button>
         <button class="hbtn" onclick="alignOrbit()">Align</button>
         <button class="hbtn" id="rot-btn" onclick="toggleRot()">Stop</button>
         <button class="hbtn">Sync</button>
         <button class="hbtn-ic" onclick="toast('Settings locked.')">
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
     </div>
 </header>
@@ -264,7 +263,7 @@
 <div class="overlay" id="reset-ov">
     <div class="ov-card">
         <div style="font-family:'Syne';font-size:20px;font-weight:800;color:var(--danger);text-align:center;margin-bottom:10px;">Clear Loop</div>
-        <p style="text-align:center;font-size:12px;color:var(--mute);margin-bottom:20px;">現在のデータを消去します。</p>
+        <p style="text-align:center;font-size:12px;color:var(--mute);margin-bottom:20px;">現在の全データを消去します。</p>
         <div style="display:flex;gap:12px;">
             <button style="flex:1;padding:14px;background:transparent;border:1.5px solid var(--border);border-radius:12px;color:var(--mute);font-size:11px;font-weight:600;" onclick="closeReset()">Cancel</button>
             <button class="btn-p" style="background:var(--danger);box-shadow:none;" onclick="clearLoop()">CLEAR</button>
@@ -282,35 +281,52 @@ const $ = id => document.getElementById(id);
 const dyn = $('dynamic-layer'), svg = $('svg-layer'), defs = $('svg-defs');
 
 window.onload = () => {
-    const saved = localStorage.getItem('nimoloop_v25_precision');
+    const saved = localStorage.getItem('nimoloop_v25_6_absolute');
     if (saved) tracks = JSON.parse(saved);
     if (!tracks.length) tracks = [mkT('Track 1')];
-    applyTheme(); renderPager(); typeHint(); setInterval(typeHint, 30000);
-    window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp); window.addEventListener('resize', render);
-    $('canvas-container').addEventListener('touchstart', e => { txStart = e.touches[0].clientX; }, {passive:true});
-    $('canvas-container').addEventListener('touchend', e => {
+    applyTheme(); renderPager(); typeHint();
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('resize', render);
+    
+    // Swipe for new track logic
+    document.body.addEventListener('touchstart', e => { txStart = e.touches[0].clientX; }, {passive:true});
+    document.body.addEventListener('touchend', e => {
+        if (document.querySelector('.view.open, .overlay.open')) return;
         const dx = e.changedTouches[0].clientX - txStart;
         if (Math.abs(dx) > 80) switchT(cur + (dx > 0 ? -1 : 1));
     });
+    
     requestAnimationFrame(loop);
 };
 
 function mkT(name) {
     const randomPal = PAL[Math.floor(Math.random()*PAL.length)];
-    return { id: Date.now()+Math.random(), name, nodes:[], conns:[], sols:{}, cp: randomPal };
+    // Default to Emerald/Lime for the very first track
+    const chosenPal = (tracks.length === 0) ? PAL[0] : randomPal;
+    return { id: Date.now()+Math.random(), name, nodes:[], conns:[], sols:{}, cp: chosenPal };
 }
 
 function applyTheme() {
     const t = tracks[cur];
-    document.documentElement.style.setProperty('--emerald', t.cp.m); document.documentElement.style.setProperty('--lime', t.cp.l);
-    $('tname').textContent = t.name; $('tname').style.color = t.cp.m;
+    document.documentElement.style.setProperty('--emerald', t.cp.m);
+    document.documentElement.style.setProperty('--lime', t.cp.l);
+    $('tname').textContent = t.name;
+    $('tname').style.color = t.cp.m;
     $('bi').style.background = `linear-gradient(135deg, ${t.cp.m}, ${t.cp.l})`;
-    document.querySelectorAll('.btn-p').forEach(btn => { if (!btn.style.background.includes('transparent')) btn.style.background = `linear-gradient(135deg, ${t.cp.m}, ${t.cp.l})`; });
+    document.querySelectorAll('.btn-p').forEach(btn => {
+        if (!btn.style.background.includes('transparent')) btn.style.background = `linear-gradient(135deg, ${t.cp.m}, ${t.cp.l})`;
+    });
 }
 
 function renderPager() {
     const p = $('pager'); p.innerHTML = '';
-    tracks.forEach((t, i) => { const d = document.createElement('div'); d.className = 'dot' + (i===cur?' on':''); if (i===cur) d.style.background = t.cp.m; p.appendChild(d); });
+    tracks.forEach((t, i) => {
+        const d = document.createElement('div');
+        d.className = 'dot' + (i===cur?' on':'');
+        if (i===cur) d.style.background = t.cp.m;
+        p.appendChild(d);
+    });
 }
 
 function loop() {
@@ -322,15 +338,15 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-function ctr() { return { x: $('canvas-container').clientWidth/2, y: $('canvas-container').clientHeight/2 }; }
-function getR() { return Math.min(ctr().x, ctr().y) * 0.75; }
+/* Absolute Center Calculation (Whole Device Screen) */
+function ctr() { return { x: window.innerWidth / 2, y: window.innerHeight / 2 }; }
+function getR() { return Math.min(window.innerWidth, window.innerHeight) * 0.35; }
 
 function getPos(n) {
     const c = ctr(), r = getR(), a = (n.angle || 0) + rotAng;
     return { x: c.x + r * Math.cos(a), y: c.y + r * Math.sin(a), a, r };
 }
 
-/* Precision Tapered Path */
 function getTaperedPath(s, tg, r) {
     const steps = 40; const center = ctr();
     let diff = (tg.a - s.a) % (2 * Math.PI); if (diff < 0) diff += 2 * Math.PI;
@@ -347,7 +363,10 @@ function getTaperedPath(s, tg, r) {
 function render() {
     const t = tracks[cur], c = ctr(), radius = getR();
     const activeIds = new Set(t.nodes.map(n => String(n.id)));
-    $('orbit-ring').setAttribute('r', radius);
+    
+    const ring = $('orbit-ring');
+    ring.setAttribute('cx', c.x); ring.setAttribute('cy', c.y);
+    ring.setAttribute('r', radius); ring.style.stroke = t.cp.m;
     
     while(svg.lastChild && svg.lastChild.id !== 'svg-defs' && svg.lastChild.id !== 'orbit-ring') svg.removeChild(svg.lastChild);
     while(defs.lastChild) defs.removeChild(defs.lastChild);
@@ -412,6 +431,7 @@ function render() {
         }
     });
     $('empty').style.display = t.nodes.length===0?'flex':'none';
+    $('empty').style.left = c.x + 'px'; $('empty').style.top = c.y + 'px';
 }
 
 function switchT(idx) {
@@ -427,26 +447,47 @@ function nodeClick(id) {
 function toggleConn() { isConn=!isConn; selId=null; $('conn-btn').classList.toggle('on',isConn); $('conn-btn').textContent=isConn?'Select Target':'Polarity Snap'; }
 function openInject() { $('inj-ov').classList.add('open'); setTimeout(()=>$('node-inp').focus(),100); }
 function closeInject() { $('inj-ov').classList.remove('open'); $('node-inp').value=''; }
+
 function addNode() {
     const v = $('node-inp').value.trim(); if(!v) return;
-    tracks[cur].nodes.push({id:Date.now(), label:v}); distribute();
-    closeInject(); render(); sync();
+    tracks[cur].nodes.push({id:Date.now(), label:v}); 
+    distribute(); // FORCE EQUAL SPACING
+    closeInject(); // IMMEDIATE RETURN
+    render(); sync();
 }
+
 function onDown(e, id) { if(isConn) return; dragId=id; document.querySelector(`.node[data-id="${id}"]`).classList.add('dragging'); }
-function onMove(e) { if(!dragId) return; const r = $('canvas-container').getBoundingClientRect(), c=ctr(), dx = e.clientX-r.left-c.x, dy=e.clientY-r.top-c.y, n = tracks[cur].nodes.find(x=>x.id===dragId); if(n) { n.angle = Math.atan2(dy,dx)-rotAng; render(); } }
+function onMove(e) { if(!dragId) return; const c=ctr(), dx = e.clientX-c.x, dy=e.clientY-c.y, n = tracks[cur].nodes.find(x=>x.id===dragId); if(n) { n.angle = Math.atan2(dy,dx)-rotAng; render(); } }
 function onUp() { if(!dragId) return; document.querySelectorAll('.node').forEach(n=>n.classList.remove('dragging')); dragId=null; distribute(); sync(); }
-function distribute() { const t=tracks[cur]; t.nodes.forEach((n,i)=>{ if(n.angle===undefined) n.angle=(i/t.nodes.length)*2*Math.PI; }); if(t.nodes.length>1) { t.conns = t.nodes.map((n,i)=>({id:`c-${n.id}`,s:n.id,t:t.nodes[(i+1)%t.nodes.length].id,type:'S'})); } else t.conns=[]; }
+
+/* ABSOLUTE EQUAL DISTRIBUTION LOGIC */
+function distribute() {
+    const t = tracks[cur];
+    if (t.nodes.length === 0) { t.conns = []; return; }
+    // Sort nodes by current angle to maintain general layout if possible
+    t.nodes.sort((a, b) => (a.angle || 0) - (b.angle || 0));
+    t.nodes.forEach((n, i) => { n.angle = (i / t.nodes.length) * 2 * Math.PI; });
+    if (t.nodes.length > 1) {
+        t.conns = t.nodes.map((n, i) => {
+            const existing = t.conns.find(c => c.s === n.id);
+            return { id: `c-${n.id}`, s: n.id, t: t.nodes[(i + 1) % t.nodes.length].id, type: existing ? existing.type : 'S' };
+        });
+    } else t.conns = [];
+}
+
 function openDetail(id) { detId=id; const n=tracks[cur].nodes.find(x=>x.id===id); $('det-name').textContent=n.label; refreshPlans(); $('detail-view').classList.add('open'); }
 function closeDetail() { $('detail-view').classList.remove('open'); render(); }
 function refreshPlans() { const l=$('plan-list'); l.innerHTML=''; (tracks[cur].sols[detId]||[]).forEach((p,i)=>{ const d=document.createElement('div'); d.style.background='var(--bg2)'; d.style.padding='10px'; d.style.borderRadius='8px'; d.style.marginBottom='6px'; d.style.fontSize='12px'; d.textContent=p; l.appendChild(d); }); }
 function addPlan() { const v=$('plan-inp').value.trim(); if(!v) return; if(!tracks[cur].sols[detId]) tracks[cur].sols[detId]=[]; tracks[cur].sols[detId].push(v); $('plan-inp').value=''; refreshPlans(); render(); sync(); }
 function delNode() { if(!confirm('削除しますか？')) return; tracks[cur].nodes=tracks[cur].nodes.filter(x=>x.id!==detId); distribute(); closeDetail(); render(); sync(); }
+
+function newTrack() { switchT(tracks.length); }
 function alignOrbit() { rotAng=0; render(); }
 function toggleRot() { isRot=!isRot; $('rot-btn').textContent=isRot?'Stop':'Rotate'; }
 function openReset() { $('reset-ov').classList.add('open'); }
 function closeReset() { $('reset-ov').classList.remove('open'); }
 function clearLoop() { tracks[cur]=mkT(tracks[cur].name); closeReset(); render(); sync(); }
-function sync() { localStorage.setItem('nimoloop_v25_precision', JSON.stringify(tracks)); }
+function sync() { localStorage.setItem('nimoloop_v25_6_absolute', JSON.stringify(tracks)); }
 function toast(msg) { const el=document.createElement('div'); el.className='toast'; el.textContent=msg; el.style.background=tracks[cur].cp.m; $('toasts').appendChild(el); setTimeout(()=>{el.remove()},2500); }
 function typeHint() { let h=HINTS[Math.floor(Math.random()*HINTS.length)], i=0, el=$('hint-text'); el.textContent=''; function tick(){ if(i<h.length){ el.textContent+=h[i++]; setTimeout(tick, 250); } } tick(); }
 </script>
