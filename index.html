@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>System Loop Creator v24.3</title>
+    <title>System Loop Creator v25.3</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --c: #10b981;
-            --cl: #bef264;
+            --emerald: #10b981;
+            --lime: #bef264;
+            --c: var(--emerald);
+            --cl: var(--lime);
+            --grad: linear-gradient(135deg, var(--emerald), var(--lime));
             --bg: #050c1a;
             --bg2: #0b1628;
             --bg3: #111e35;
-            --surface: rgba(11,22,40,0.97);
             --border: rgba(255,255,255,0.06);
             --text: #e2e8f0;
             --mute: #4a5a72;
-            --sett: #94a3b8;
             --danger: #f87171;
             --radius-pill: 9999px;
             --radius-lg: 16px;
@@ -39,7 +40,6 @@
             touch-action: none;
         }
 
-        /* HEADER: Matches 355.png Layout */
         header {
             height: var(--header-h);
             background: var(--bg2);
@@ -49,105 +49,84 @@
         }
 
         .brand { display: flex; align-items: center; gap: 10px; }
-        .brand-icon { width: 32px; height: 32px; background: var(--c); border-radius: 8px; display: grid; place-items: center; }
+        .brand-icon { width: 32px; height: 32px; background: var(--grad); border-radius: 8px; display: grid; place-items: center; }
         .brand-icon svg { width: 16px; height: 16px; color: #050c1a; }
-        .brand-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; color: var(--c); letter-spacing: -0.3px; line-height: 1; }
+        .brand-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; color: var(--emerald); letter-spacing: -0.3px; line-height: 1; }
         .brand-sub { font-size: 8px; color: var(--mute); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
 
         .hacts { display: flex; align-items: center; gap: 6px; }
         .hbtn {
             height: 30px; padding: 0 10px;
-            background: transparent; border: 1.2px solid var(--c); border-radius: 8px;
-            color: var(--c); font-family: 'Space Mono', monospace;
+            background: transparent; border: 1.2px solid var(--emerald); border-radius: 8px;
+            color: var(--emerald); font-family: 'Space Mono', monospace;
             font-size: 9px; font-weight: 600; text-transform: uppercase;
             cursor: pointer; transition: all 0.2s;
         }
-        .hbtn:hover { background: var(--c); color: var(--bg); }
+        .hbtn:hover { background: var(--grad); color: var(--bg); border-color: transparent; }
         .hbtn-ic { width: 32px; height: 32px; padding: 0; border: none; background: transparent; color: var(--mute); display: grid; place-items: center; cursor: pointer; }
-        .hbtn-ic svg { width: 22px; height: 22px; }
 
-        /* HINT BANNER */
         #hint-banner {
             height: var(--banner-h); background: var(--bg2); border-bottom: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center; padding: 0 20px; flex-shrink: 0; position: relative;
         }
-        #hint-banner::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
-        #hint-text { font-size: 13px; font-weight: 600; color: var(--c); text-align: center; line-height: 1.5; max-width: 90%; }
-        #hint-cursor { display: inline-block; width: 2px; height: 14px; background: var(--c); margin-left: 2px; vertical-align: middle; animation: blink 1s infinite; }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        #hint-banner::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--grad); }
+        #hint-text { font-size: 13px; font-weight: 600; color: var(--emerald); text-align: center; line-height: 1.5; max-width: 90%; }
+        #hint-cursor { display: inline-block; width: 2px; height: 14px; background: var(--emerald); margin-left: 2px; vertical-align: middle; animation: blink 1s infinite; }
 
-        /* CANVAS AREA */
-        #canvas-container { flex: 1; position: relative; overflow: hidden; background: var(--bg); }
-        #canvas-container::before {
-            content: ''; position: absolute; inset: 0;
-            background-image: linear-gradient(rgba(255,255,255,0.013) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.013) 1px, transparent 1px);
-            background-size: 40px 40px; pointer-events: none;
-        }
-        #dynamic-layer { position: absolute; inset: 0; }
+        #canvas-container { flex: 1; position: relative; overflow: hidden; background: var(--bg); display: flex; align-items: center; justify-content: center; }
+        #dynamic-layer { position: absolute; inset: 0; pointer-events: none; }
+        #dynamic-layer > * { pointer-events: auto; }
         #svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 
-        /* RING PATH */
-        .ring-path { fill: none; stroke: rgba(16, 185, 129, 0.4); stroke-width: 3; stroke-linecap: round; }
+        .ring-path { fill: none; stroke: var(--emerald); stroke-width: 2.5; opacity: 0.12; stroke-linecap: round; }
+        .flow-line-tapered { stroke: none; opacity: 0.95; }
 
-        /* NODES (Precision Aligned) */
         .node {
             position: absolute; padding: 10px 24px;
-            background: var(--bg2);
-            border: 2px solid var(--c); border-radius: var(--radius-pill);
+            background: var(--bg2); border: 2px solid var(--emerald); border-radius: var(--radius-pill);
             font-family: sans-serif; font-size: 13px; font-weight: 700;
             color: #fff; text-align: center; white-space: nowrap; user-select: none;
             cursor: grab; z-index: 30; transform: translate(-50%, -50%); min-width: 90px;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
-            transition: box-shadow 0.3s, border-color 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            transition: border-color 0.4s;
         }
-        .node.dragging { z-index: 100; box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); border-color: #fff; }
-        .node.sel { border-color: var(--cl); box-shadow: 0 0 20px var(--cl); }
-
+        .node.dragging { z-index: 100; border-color: #fff; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+        .node.sel { border-color: var(--lime); box-shadow: 0 0 15px var(--lime); }
         .node-dot {
-            position: absolute; top: -4px; right: -4px;
-            width: 14px; height: 14px; background: var(--cl); border-radius: 50%;
+            position: absolute; top: -5px; right: -5px;
+            width: 14px; height: 14px; background: var(--lime); border-radius: 50%;
             border: 2px solid var(--bg); z-index: 35;
         }
 
-        /* POLARITY ICONS ON RING */
         .pol-circle {
             position: absolute; width: 22px; height: 22px;
-            background: var(--bg2); border-radius: 50%; border: 1.5px solid var(--c);
+            background: var(--bg2); border-radius: 50%; border: 1.5px solid var(--emerald);
             display: flex; align-items: center; justify-content: center;
-            color: var(--c); font-size: 11px; font-weight: 800;
-            z-index: 20; transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
-            cursor: pointer;
+            color: var(--emerald); font-size: 11px; font-weight: 800;
+            z-index: 20; transform: translate(-50%, -50%); cursor: pointer;
+            box-shadow: 0 0 8px rgba(0,0,0,0.6);
         }
-        .pol-label {
-            position: absolute; color: var(--cl); font-weight: 900; font-size: 13px;
-            transform: translate(-50%, -50%); pointer-events: none;
-        }
+        .pol-label { position: absolute; color: var(--lime); font-weight: 900; font-size: 13px; transform: translate(-50%, -50%); pointer-events: none; }
 
-        /* ACTION PLAN CLOUDS */
         .sol-cloud {
             position: absolute; padding: 8px 16px;
-            background: rgba(11, 22, 40, 0.96); border: 1.2px dashed var(--c); border-radius: 12px;
+            background: rgba(11, 22, 40, 0.97); border: 1.2px dashed var(--emerald); border-radius: 12px;
             color: #fff; font-size: 11px; font-family: sans-serif; font-weight: 600;
             max-width: 180px; text-align: center; z-index: 25; cursor: pointer;
-            transform: translate(-50%, -50%); backdrop-filter: blur(12px);
+            transform: translate(-50%, -50%); backdrop-filter: blur(10px);
             box-shadow: 0 6px 12px rgba(0,0,0,0.5);
         }
 
-        /* BOTTOM UI: Matches 355.png */
         #pager { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 90; }
         .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: all 0.3s; }
-        .dot.on { background: var(--c); transform: scale(1.5); }
+        .dot.on { background: var(--emerald); transform: scale(1.5); }
 
         .btn-reset-fixed {
             position: fixed; bottom: 24px; left: 20px;
             height: 42px; padding: 0 20px;
             background: transparent; border: 1.8px solid var(--danger); border-radius: 12px;
-            color: var(--danger); font-family: 'Space Mono', monospace;
-            font-size: 11px; font-weight: 700; cursor: pointer; z-index: 100;
-            transition: all 0.2s;
+            color: var(--danger); font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; cursor: pointer; z-index: 100;
         }
-        .btn-reset-fixed:hover { background: var(--danger); color: var(--bg); }
 
         #conn-btn {
             position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -155,50 +134,35 @@
             background: rgba(11, 22, 40, 0.85); border: 1.5px solid var(--border); border-radius: var(--radius-pill);
             color: var(--mute); font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 600;
             cursor: pointer; z-index: 100; backdrop-filter: blur(16px);
+            transition: all 0.3s;
         }
-        #conn-btn.on { background: var(--c); color: var(--bg); border-color: var(--c); }
+        #conn-btn.on { background: var(--grad); color: var(--bg); border-color: transparent; }
 
         .fab {
             position: fixed; bottom: 24px; right: 20px;
             width: 68px; height: 68px; border-radius: 50%;
             display: grid; place-items: center;
-            background: var(--c); color: var(--bg);
-            font-size: 36px; font-weight: 800;
-            cursor: pointer; z-index: 100;
-            box-shadow: 0 10px 28px rgba(0,0,0,0.6); border: none;
-            transition: transform 0.1s;
+            background: var(--grad); color: var(--bg);
+            font-size: 36px; font-weight: 800; cursor: pointer; z-index: 100;
+            box-shadow: 0 10px 28px rgba(16, 185, 129, 0.4); border: none;
         }
-        .fab:active { transform: scale(0.92); }
 
-        /* MODALS & OVERLAYS */
         .view { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 300; overflow-y: auto; }
         .view.open { display: block; }
         .v-inner { max-width: 440px; margin: 0 auto; padding: 24px 24px 80px; }
         .v-back { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; color: var(--mute); font-size: 11px; font-weight: 600; cursor: pointer; margin-bottom: 24px; }
-        .v-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--c); margin-bottom: 20px; }
-
-        .card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 16px; }
-        .flabel { font-size: 10px; font-weight: 700; color: var(--mute); margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* GRADIENT INJECT BUTTON: Optimized as requested */
+        
         .btn-p { 
             width: 100%; padding: 16px 20px; 
-            background: linear-gradient(135deg, var(--cl), var(--c)); 
-            color: var(--bg); border: none; border-radius: var(--radius-md); 
-            font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; /* Medium weight, no Bold */
-            cursor: pointer; 
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-            transition: transform 0.1s;
+            background: var(--grad); color: var(--bg); border: none; border-radius: var(--radius-md); 
+            font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; 
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
         }
-        .btn-p:active { transform: scale(0.98); }
 
         .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 400; align-items: center; justify-content: center; padding: 20px; }
         .overlay.open { display: flex; }
-        .ov-card { background: var(--bg2); border: 2.5px solid var(--c); border-radius: 28px; padding: 32px; width: 100%; max-width: 380px; }
-        .ov-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--c); text-align: center; margin-bottom: 24px; }
-        .ov-acts { display: flex; gap: 14px; }
-        .btn-cancel { flex: 0 0 90px; padding: 16px; background: transparent; color: var(--mute); border: 1.5px solid var(--border); border-radius: var(--radius-md); font-size: 11px; font-weight: 600; cursor: pointer; }
-
+        .ov-card { background: var(--bg2); border: 2.5px solid var(--emerald); border-radius: 28px; padding: 32px; width: 100%; max-width: 380px; }
+        
         input[type="text"] { 
             width: 100%; background: var(--bg2) !important; border: 2px solid var(--border) !important; 
             border-radius: var(--radius-md) !important; padding: 16px 20px !important; 
@@ -208,10 +172,6 @@
         #empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; }
         .em-ring { width: 64px; height: 64px; border: 3px dashed var(--mute); border-radius: 50%; display: grid; place-items: center; opacity: 0.4; }
         .em-t { font-family:'Syne',sans-serif; font-size: 16px; font-weight: 700; color: var(--mute); opacity: 0.6; }
-
-        .plan-item { display: flex; align-items: center; gap: 12px; background: var(--bg2); padding: 14px; border-radius: 14px; margin-bottom: 10px; border: 1.5px solid var(--border); }
-        .plan-item span { flex: 1; font-size: 13px; font-weight: 500; }
-        .plan-del { color: var(--danger); cursor: pointer; font-size: 18px; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -228,11 +188,11 @@
     </div>
     <div class="hacts">
         <button class="hbtn" onclick="switchT(tracks.length)">New</button>
-        <button class="hbtn" onclick="alignOrbit(true)">Align</button>
+        <button class="hbtn" onclick="alignOrbit()">Align</button>
         <button class="hbtn" id="rot-btn" onclick="toggleRot()">Stop</button>
-        <button class="hbtn" onclick="openSettings()">Sync</button>
-        <button class="hbtn-ic" onclick="openSettings()">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <button class="hbtn">Sync</button>
+        <button class="hbtn-ic" onclick="toast('Settings locked.')">
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
     </div>
 </header>
@@ -240,221 +200,260 @@
 <div id="hint-banner"><span id="hint-text"></span><span id="hint-cursor"></span></div>
 
 <div id="canvas-container">
-    <div id="dynamic-layer">
-        <svg id="svg-layer">
-            <circle id="main-orbit" class="ring-path" cx="50%" cy="50%" r="0"></circle>
-        </svg>
-        <div id="empty">
-            <div class="em-ring"><svg width="28" height="28" fill="none" stroke="#4a5a72" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg></div>
-            <div class="em-t">ループが空です</div>
-        </div>
+    <svg id="svg-layer">
+        <defs id="svg-defs"></defs>
+        <circle id="orbit-ring" class="ring-path" cx="50%" cy="50%" r="0"></circle>
+    </svg>
+    <div id="dynamic-layer"></div>
+    <div id="empty">
+        <div class="em-ring"><svg width="28" height="28" fill="none" stroke="#4a5a72" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg></div>
+        <div class="em-t">ループが空です</div>
     </div>
 </div>
 
 <div id="pager"></div>
 <div id="toasts"></div>
 
-<!-- BOTTOM ACTIONS: Matches 355.png Layout -->
-<button id="conn-btn" onclick="toggleConn()">Polarity Snap</button>
 <button class="btn-reset-fixed" onclick="openReset()">RESET</button>
-<button class="fab" onclick="openNodeModal(null)">＋</button>
+<button id="conn-btn" onclick="toggleConn()">Polarity Snap</button>
+<button class="fab" onclick="openInject()">＋</button>
 
 <!-- Modals -->
+<div class="overlay" id="inj-ov">
+    <div class="ov-card">
+        <div style="font-family:'Syne';font-size:20px;font-weight:800;color:var(--emerald);text-align:center;margin-bottom:20px;">Inject Variable</div>
+        <input type="text" id="node-inp" placeholder="Variable Name...">
+        <div style="display:flex;gap:12px;">
+            <button style="flex:1;padding:14px;background:transparent;border:1.5px solid var(--border);border-radius:12px;color:var(--mute);font-size:11px;font-weight:600;" onclick="closeInject()">Cancel</button>
+            <button class="btn-p" id="add-btn-final" onclick="addNode()">INJECT</button>
+        </div>
+    </div>
+</div>
+
 <div class="view" id="detail-view">
     <div class="v-inner">
         <button class="v-back" onclick="closeDetail()">← Back</button>
-        <div class="v-title" id="detail-lbl">Variable</div>
+        <div id="det-name" style="font-family:'Syne';font-size:24px;font-weight:800;color:var(--emerald);margin-bottom:20px;">Variable</div>
         <div class="card">
-            <label class="flabel">Action Plans</label>
-            <div id="plan-list" style="margin-bottom: 16px;"></div>
-            <div style="display: flex; gap: 12px;">
-                <input type="text" id="new-plan-inp" placeholder="Add action...">
-                <button onclick="addPlanToList()" style="width: 65px; height: 52px; background: var(--c); border:none; border-radius: 12px; color: var(--bg); font-size: 24px; font-weight: 700;">＋</button>
+            <div style="font-size:10px;color:var(--mute);margin-bottom:10px;font-weight:700;text-transform:uppercase;">Action Plans</div>
+            <div id="plan-list"></div>
+            <div style="display:flex;gap:10px;margin-top:10px;">
+                <input type="text" id="plan-inp" placeholder="Next step...">
+                <button onclick="addPlan()" style="width:60px;height:52px;background:var(--grad);color:var(--bg);border:none;border-radius:12px;font-size:24px;font-weight:800;">+</button>
             </div>
         </div>
         <button class="btn-p" style="background:transparent; border:1.5px solid var(--danger); color:var(--danger); font-size:12px;" onclick="delNode()">Delete Node</button>
     </div>
 </div>
 
-<div class="view" id="settings-view">
-    <div class="v-inner">
-        <button class="v-back" onclick="closeSettings()">← Back</button>
-        <div class="v-title">Settings</div>
-        <div class="card"><label class="flabel">Track Name</label><input type="text" id="tname-inp"><button class="btn-p" onclick="renameTrack()">Rename</button></div>
-    </div>
-</div>
-
-<div class="overlay" id="node-ov">
-    <div class="ov-card"><div class="ov-title">Inject Variable</div><input type="text" id="node-inp" placeholder="Name..."><div class="ov-acts"><button class="btn-cancel" onclick="closeNodeModal()">Cancel</button><button class="btn-p" id="inj-btn" onclick="addNode()">INJECT</button></div></div>
-</div>
-
 <div class="overlay" id="reset-ov">
-    <div class="ov-card"><div class="ov-title" style="color:var(--danger)">Confirm Reset</div><p style="text-align:center;font-size:13px;margin-bottom:28px; color: var(--mute);">現在のループを完全に消去します。</p><div class="ov-acts"><button class="btn-cancel" onclick="closeReset()">Cancel</button><button class="btn-p" style="background:var(--danger)" onclick="clearCanvas()">CLEAR</button></div></div>
+    <div class="ov-card">
+        <div style="font-family:'Syne';font-size:20px;font-weight:800;color:var(--danger);text-align:center;margin-bottom:10px;">Clear Loop</div>
+        <p style="text-align:center;font-size:12px;color:var(--mute);margin-bottom:20px;">現在のデータを消去します。</p>
+        <div style="display:flex;gap:12px;">
+            <button style="flex:1;padding:14px;background:transparent;border:1.5px solid var(--border);border-radius:12px;color:var(--mute);font-size:11px;font-weight:600;" onclick="closeReset()">Cancel</button>
+            <button class="btn-p" style="background:var(--danger);box-shadow:none;" onclick="clearLoop()">CLEAR</button>
+        </div>
+    </div>
 </div>
 
 <script>
 const PAL = [{m:'#10b981',l:'#bef264'}, {m:'#06b6d4',l:'#a5f3fc'}, {m:'#8b5cf6',l:'#ddd6fe'}, {m:'#f59e0b',l:'#fef3c7'}, {m:'#ec4899',l:'#fbcfe8'}, {m:'#3b82f6',l:'#bfdbfe'}];
-const HINTS = ["「同じ問題が形を変えて何度も起きる」時、そこには必ず隠れたループがある。", "犯人（人）を探すのをやめ、行動を強制している「構造（ループ）」を探す。", "レバレッジポイントは、常に直感に反する場所にある。", "システムの挙動は、その「目的」と「構造」によって決定される。", "対症療法ではなく、因果の根源（ループの結び目）を見極めるのが参謀の仕事です。", "遅れ（ディレイ）を考慮せよ。結果が出るまでには必ず時間差が生じます。"];
+const HINTS = ["「同じ問題が形を変えて何度も起きる」時、そこには必ず隠れたループがある。", "犯人を探すのをやめ、構造を探す。", "レバレッジポイントは、常に直感に反する場所にある。", "システムの挙動は、その目的と構造によって決定される。", "因果の根源を見極めるのが参謀の仕事です。"];
 
-let tracks=[], cur=0, isConn=false, selId=null, isRot=true, rotAng=0, orbitAng=0;
-let dragId=null, detId=null, txStart=0, typingOn=false;
+let tracks=[], cur=0, isRot=true, rotAng=0, orbitAng=0, isConn=false, selId=null, dragId=null, detId=null, txStart=0;
 
 const $ = id => document.getElementById(id);
-const dyn = $('dynamic-layer');
-const svg = $('svg-layer');
+const dyn = $('dynamic-layer'), svg = $('svg-layer'), defs = $('svg-defs');
 
 window.onload = () => {
-    const raw = localStorage.getItem('slc_v24_precision');
-    if (raw) { try { tracks = JSON.parse(raw); } catch(e) { tracks=[]; } }
+    const saved = localStorage.getItem('nimoloop_v25_final');
+    if (saved) tracks = JSON.parse(saved);
     if (!tracks.length) tracks = [mkT('Track 1')];
-    tracks.forEach(t => { if(!t.cp) t.cp = PAL[0]; if(!t.sols) t.sols={}; });
-    renderPager(); applyTheme(); typeHint(); setInterval(typeHint, 32000);
-    window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp); window.addEventListener('resize', render);
+    applyTheme(); renderPager(); typeHint();
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('resize', render);
+    
     $('canvas-container').addEventListener('touchstart', e => { txStart = e.touches[0].clientX; }, {passive:true});
-    $('canvas-container').addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - txStart; if (Math.abs(dx) > 85) switchT(cur + (dx>0?-1:1)); });
-    $('node-inp').addEventListener('keydown', e => { if (e.key==='Enter') addNode(); });
+    $('canvas-container').addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - txStart;
+        if (Math.abs(dx) > 85) switchT(cur + (dx > 0 ? -1 : 1));
+    });
+    
     requestAnimationFrame(loop);
 };
 
-function mkT(name) { return { id: Date.now()+Math.random(), name, nodes:[], conns:[], sols:{}, cp: PAL[0] }; }
+function mkT(name) {
+    const randomPal = PAL[Math.floor(Math.random()*PAL.length)];
+    return { id: Date.now()+Math.random(), name, nodes:[], conns:[], sols:{}, cp: randomPal };
+}
 
 function applyTheme() {
-    const t = tracks[cur], c = t.cp; document.documentElement.style.setProperty('--c', c.m); document.documentElement.style.setProperty('--cl', c.l);
-    $('bi').style.background = c.m; $('tname').textContent = t.name; $('tname').style.color = c.m;
-}
-
-function typeHint() {
-    typingOn = false; const h = HINTS[Math.floor(Math.random()*HINTS.length)]; 
-    const el = $('hint-text'); el.textContent = ''; let i=0; typingOn=true;
-    function tick() { if (typingOn && i<h.length) { el.textContent+=h[i++]; setTimeout(tick, 250); } }
-    tick();
-}
-
-function loop() {
-    const anyOpen = document.querySelector('.view.open, .overlay.open');
-    if (isRot && tracks[cur].nodes.length>0 && !anyOpen && !dragId) { rotAng += 0.003; orbitAng -= 0.005; render(); }
-    requestAnimationFrame(loop);
-}
-
-function switchT(idx) { 
-    if (idx < 0 || idx >= 10) return; 
-    while (idx >= tracks.length) tracks.push(mkT(`Track ${tracks.length+1}`));
-    cur = idx; rotAng = 0; orbitAng = 0; applyTheme(); renderPager(); syncLocal(); render(); typeHint(); 
+    const t = tracks[cur];
+    document.documentElement.style.setProperty('--emerald', t.cp.m);
+    document.documentElement.style.setProperty('--lime', t.cp.l);
+    $('tname').textContent = t.name;
+    $('tname').style.color = t.cp.m;
+    $('bi').style.background = `linear-gradient(135deg, ${t.cp.m}, ${t.cp.l})`;
+    document.querySelectorAll('.btn-p').forEach(btn => {
+        if (!btn.style.background.includes('transparent')) btn.style.background = `linear-gradient(135deg, ${t.cp.m}, ${t.cp.l})`;
+    });
 }
 
 function renderPager() {
     const p = $('pager'); p.innerHTML = '';
-    tracks.forEach((t, i) => { const d = document.createElement('div'); d.className = 'dot' + (i===cur?' on':''); if (i===cur) d.style.background = t.cp.m; p.appendChild(d); });
+    tracks.forEach((t, i) => {
+        const d = document.createElement('div');
+        d.className = 'dot' + (i===cur?' on':'');
+        if (i===cur) d.style.background = t.cp.m;
+        p.appendChild(d);
+    });
 }
 
-function ctr() { const c = $('canvas-container'); return { x: c.clientWidth/2, y: c.clientHeight/2 }; }
-function getRadius() { const c = ctr(); return Math.min(c.x, c.y) * 0.75; }
-function pos(node) { 
-    const c = ctr(), r = getRadius(); 
-    const a = (node.baseAngle||0) + (isRot?rotAng:0); 
-    return { x: c.x + r * Math.cos(a), y: c.y + r * Math.sin(a), a, r }; 
+function loop() {
+    const modalOpen = document.querySelector('.view.open, .overlay.open');
+    if (isRot && tracks[cur].nodes.length > 0 && !dragId && !modalOpen) {
+        rotAng += 0.003; orbitAng -= 0.005;
+        render();
+    }
+    requestAnimationFrame(loop);
 }
 
-function distribute(all=false) { 
-    const t = tracks[cur]; if (!t.nodes.length) return; 
-    t.nodes.forEach((n,i) => { if (all || n.baseAngle===undefined) { n.baseAngle = (i/t.nodes.length)*2*Math.PI; } }); 
-    autoConn(); 
+function ctr() { return { x: $('canvas-container').clientWidth/2, y: $('canvas-container').clientHeight/2 }; }
+function getR() { return Math.min(ctr().x, ctr().y) * 0.75; }
+
+function getPos(n) {
+    const c = ctr(), r = getR(), a = (n.angle || 0) + rotAng;
+    return { x: c.x + r * Math.cos(a), y: c.y + r * Math.sin(a), a, r };
 }
 
-function alignOrbit(all=true) { distribute(all); rotAng=0; render(); syncLocal(); toast('Aligned'); }
-function autoConn() {
-    const t = tracks[cur]; if (t.nodes.length<2) { t.conns=[]; return; }
-    const tm={}; t.conns.forEach(c => { tm[`${c.s}-${c.t}`]=c.type; });
-    t.conns = t.nodes.map((n,i) => { const s=n.id, t2=t.nodes[(i+1)%t.nodes.length].id; return { id:`${s}-${t2}`, s, t:t2, type: tm[`${s}-${t2}`]||'S' }; });
+function getTaperedPath(s, tg, r) {
+    const steps = 40; const center = ctr();
+    let diff = (tg.a - s.a) % (2 * Math.PI); if (diff < 0) diff += 2 * Math.PI;
+    if (diff < 0.1) return "";
+    const op = []; const ip = [];
+    for (let i = 0; i <= steps; i++) {
+        const ratio = i / steps, ang = s.a + diff * ratio, w = 7.0 - (6.2 * ratio);
+        op.push({ x: center.x + (r + w) * Math.cos(ang), y: center.y + (r + w) * Math.sin(ang) });
+        ip.unshift({ x: center.x + (r - w) * Math.cos(ang), y: center.y + (r - w) * Math.sin(ang) });
+    }
+    return `M ${op[0].x} ${op[0].y} ` + op.slice(1).concat(ip).map(p => `L ${p.x} ${p.y}`).join(' ') + ' Z';
 }
 
 function render() {
-    const t = tracks[cur], c = ctr();
-    const radius = getRadius();
+    const t = tracks[cur], c = ctr(), radius = getR();
     const activeIds = new Set(t.nodes.map(n => String(n.id)));
+    $('orbit-ring').setAttribute('r', radius);
+    $('orbit-ring').style.stroke = t.cp.m;
     
-    // Orbit Path Restoration
-    const ring = $('main-orbit');
-    ring.setAttribute('r', radius);
-    ring.style.stroke = tracks[cur].cp.m;
-
-    // DOM Sync
+    // SVG Refresh
+    while(svg.lastChild && svg.lastChild.id !== 'svg-defs' && svg.lastChild.id !== 'orbit-ring') svg.removeChild(svg.lastChild);
+    while(defs.lastChild) defs.removeChild(defs.lastChild);
+    
+    // Clear dynamic elements not belonging to active nodes
     document.querySelectorAll('.node, .sol-cloud, .pol-circle, .pol-label').forEach(el => {
         if (!activeIds.has(String(el.dataset.id)) && !el.classList.contains('pol-circle')) el.remove();
         if (el.classList.contains('pol-circle') || el.classList.contains('pol-label')) el.remove();
     });
 
-    $('empty').style.display = t.nodes.length===0?'flex':'none';
-
-    t.nodes.forEach(n => {
-        const p = pos(n); let el = document.querySelector(`.node[data-id="${n.id}"]`);
-        if (!el) { el=document.createElement('div'); el.className='node'; el.dataset.id=n.id; el.addEventListener('click', ()=>{ if(!dragId) nodeClick(n.id); }); el.addEventListener('pointerdown', e=>onDown(e,n.id)); dyn.appendChild(el); }
-        el.style.left=p.x+'px'; el.style.top=p.y+'px'; el.textContent=n.label; el.classList.toggle('sel', selId===n.id);
-
-        const solList = t.sols[n.id] || [];
-        let dot=el.querySelector('.node-dot');
-        if (solList.length > 0 && !dot) { dot=document.createElement('div'); dot.className='node-dot'; el.appendChild(dot); }
-        else if (solList.length === 0 && dot) dot.remove();
-
-        if (solList.length > 0 && !isConn) {
-            solList.forEach((planText, i) => {
-                const step = (2 * Math.PI) / solList.length;
-                const cloudAngle = orbitAng + (i * step); 
-                const dist = 85; const cloudX = p.x + dist * Math.cos(cloudAngle); const cloudY = p.y + dist * Math.sin(cloudAngle);
-                let cl = document.querySelector(`.sol-cloud[data-id="${n.id}"][data-idx="${i}"]`);
-                if (!cl) { cl = document.createElement('div'); cl.className = 'sol-cloud'; cl.dataset.id = n.id; cl.dataset.idx = i; cl.onclick = e => { e.stopPropagation(); openDetail(n.id); }; dyn.appendChild(cl); }
-                cl.style.left = cloudX + 'px'; cl.style.top = cloudY + 'px';
-                cl.textContent = planText.length > 20 ? planText.substring(0, 20) + '..' : planText;
-            });
-            document.querySelectorAll(`.sol-cloud[data-id="${n.id}"]`).forEach(cl => { if (parseInt(cl.dataset.idx) >= solList.length) cl.remove(); });
-        } else { document.querySelectorAll(`.sol-cloud[data-id="${n.id}"]`).forEach(cl => cl.remove()); }
-    });
-
-    // Polarity Icons on Orbit Ring
+    // Arrows
     t.conns.forEach(conn => {
-        const sn=t.nodes.find(n=>n.id===conn.s), tn=t.nodes.find(n=>n.id===conn.t);
-        if (!sn||!tn) return; const s=pos(sn), tg=pos(tn);
-        let diff=(tg.a-s.a)%(2*Math.PI); if(diff<0)diff+=2*Math.PI;
-        const midA = s.a + diff/2;
-        const lx = c.x + radius * Math.cos(midA); const ly = c.y + radius * Math.sin(midA);
+        const sn = t.nodes.find(n => n.id === conn.s), tn = t.nodes.find(n => n.id === conn.t);
+        if (!sn || !tn) return;
+        const s = getPos(sn), tg = getPos(tn), isS = conn.type === 'S', gid = `g-${conn.id}`;
+        const grad = document.createElementNS('http://www.w3.org/2000/svg','linearGradient');
+        grad.setAttribute('id', gid); grad.setAttribute('gradientUnits','userSpaceOnUse');
+        grad.setAttribute('x1', s.x); grad.setAttribute('y1', s.y); grad.setAttribute('x2', tg.x); grad.setAttribute('y2', tg.y);
+        [[0, isS?t.cp.m:'#f43f5e'], [1, isS?t.cp.l:'#f87171']].forEach(([off, col]) => {
+            const st = document.createElementNS('http://www.w3.org/2000/svg','stop');
+            st.setAttribute('offset', off*100+'%'); st.setAttribute('stop-color', col); grad.appendChild(st);
+        });
+        defs.appendChild(grad);
+        const d = getTaperedPath(s, tg, radius);
+        if (d) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+            path.setAttribute('d', d); path.setAttribute('fill', `url(#${gid})`); path.setAttribute('class','flow-line-tapered'); svg.appendChild(path);
+        }
+        const head = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+        const hs = 13;
+        const p1 = { x: tg.x + hs*Math.cos(tg.a), y: tg.y + hs*Math.sin(tg.a) };
+        const p2 = { x: tg.x + (hs/2)*Math.cos(tg.a+2.5), y: tg.y + (hs/2)*Math.sin(tg.a+2.5) };
+        const p3 = { x: tg.x + (hs/2)*Math.cos(tg.a-2.5), y: tg.y + (hs/2)*Math.sin(tg.a-2.5) };
+        head.setAttribute('points', `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
+        head.setAttribute('fill', isS ? t.cp.l : '#f87171'); svg.appendChild(head);
 
-        const pc = document.createElement('div'); pc.className = 'pol-circle'; pc.dataset.id = conn.s;
-        pc.style.left = lx + 'px'; pc.style.top = ly + 'px'; pc.textContent = '+'; 
-        pc.style.borderColor = conn.type === 'S' ? tracks[cur].cp.m : '#f43f5e';
-        pc.style.color = conn.type === 'S' ? tracks[cur].cp.m : '#f43f5e';
-        pc.onclick = () => { if(!isRot) { conn.type = conn.type === 'S' ? 'O' : 'S'; render(); syncLocal(); } };
-        dyn.appendChild(pc);
-
-        const pl = document.createElement('div'); pl.className = 'pol-label'; pl.textContent = conn.type;
-        pl.style.left = (c.x + (radius+28) * Math.cos(midA)) + 'px'; pl.style.top = (c.y + (radius+28) * Math.sin(midA)) + 'px';
-        pl.style.color = conn.type === 'S' ? tracks[cur].cp.l : '#f87171';
-        dyn.appendChild(pl);
+        // Polarity Labels
+        let df = (tg.a - s.a) % (2 * Math.PI); if (df < 0) df += 2 * Math.PI;
+        const midA = s.a + df/2, lx = c.x + radius*Math.cos(midA), ly = c.y + radius*Math.sin(midA);
+        const pc = document.createElement('div'); pc.className='pol-circle'; pc.style.left=lx+'px'; pc.style.top=ly+'px'; pc.textContent='+'; pc.style.borderColor = isS?t.cp.m:'#f43f5e'; pc.style.color = isS?t.cp.m:'#f43f5e';
+        pc.onclick = () => { if(!isRot) { conn.type = isS?'O':'S'; render(); sync(); } }; dyn.appendChild(pc);
+        const pl = document.createElement('div'); pl.className='pol-label'; pl.style.left = (c.x + (radius+28)*Math.cos(midA))+'px'; pl.style.top = (c.y + (radius+28)*Math.sin(midA))+'px'; pl.textContent = conn.type; pl.style.color = isS?t.cp.l:'#f87171'; dyn.appendChild(pl);
     });
+
+    // Nodes & Action Clouds
+    t.nodes.forEach(n => {
+        const p = getPos(n);
+        let el = document.querySelector(`.node[data-id="${n.id}"]`);
+        if (!el) { el=document.createElement('div'); el.className='node'; el.dataset.id=n.id; el.onclick=()=>nodeClick(n.id); el.onpointerdown=e=>onDown(e,n.id); dyn.appendChild(el); }
+        el.style.left=p.x+'px'; el.style.top=p.y+'px'; el.textContent=n.label; el.classList.toggle('sel', selId===n.id); el.style.borderColor=t.cp.m;
+
+        const plans = t.sols[n.id] || [];
+        let dot = el.querySelector('.node-dot');
+        if (plans.length > 0 && !dot) { dot=document.createElement('div'); dot.className='node-dot'; el.appendChild(dot); }
+        else if (plans.length===0 && dot) dot.remove();
+        if(dot) dot.style.background = t.cp.l;
+
+        // Render Action Clouds around the node
+        if (plans.length > 0 && !isConn) {
+            plans.forEach((text, i) => {
+                const step = (2*Math.PI)/plans.length, clAng = orbitAng + (i*step), dist=85;
+                const cx = p.x + dist*Math.cos(clAng), cy = p.y + dist*Math.sin(clAng);
+                let cl = document.querySelector(`.sol-cloud[data-id="${n.id}"][data-idx="${i}"]`);
+                if(!cl) { cl=document.createElement('div'); cl.className='sol-cloud'; cl.dataset.id=n.id; cl.dataset.idx=i; cl.onclick=e=>{ e.stopPropagation(); openDetail(n.id); }; dyn.appendChild(cl); }
+                cl.style.left=cx+'px'; cl.style.top=cy+'px'; cl.textContent=text.substring(0,20)+(text.length>20?'..':''); cl.style.borderColor=t.cp.m;
+            });
+        }
+    });
+    $('empty').style.display = t.nodes.length===0?'flex':'none';
 }
 
-function nodeClick(id) { if (isConn) { if (!selId) { selId=id; $('conn-btn').textContent='Select target...'; } else if (selId!==id) { const cn=tracks[cur].conns.find(c=>c.s===selId&&c.t===id); if (cn) cn.type=confirm('S (OK) or O (Cancel)?')?'S':'O'; toggleConn(); render(); syncLocal(); } } else openDetail(id); }
-function toggleConn() { isConn=!isConn; selId=null; const b=$('conn-btn'); b.classList.toggle('on',isConn); b.textContent=isConn?'Select Target':'Polarity Snap'; render(); }
-function onDown(e, id) { if (isConn) return; dragId=id; }
-function onMove(e) { if (!dragId) return; const rect = $('canvas-container').getBoundingClientRect(), c=ctr(); const dx=e.clientX-rect.left-c.x, dy=e.clientY-rect.top-c.y; const n = tracks[cur].nodes.find(n=>n.id===dragId); if (n) { n.baseAngle=Math.atan2(dy,dx)-(isRot?rotAng:0); render(); } }
-function onUp() { if (!dragId) return; dragId=null; distribute(true); syncLocal(); }
-function openNodeModal() { $('node-ov').classList.add('open'); setTimeout(()=>$('node-inp').focus(),100); }
-function closeNodeModal() { $('node-ov').classList.remove('open'); $('node-inp').value=''; }
-function addNode() { const lbl=$('node-inp').value.trim(); if(!lbl) return; const t=tracks[cur], n={id:Date.now(),label:lbl}; t.nodes.push(n); distribute(true); closeNodeModal(); render(); toast('Injected'); syncLocal(); }
-function openDetail(id) { detId=id; const n=tracks[cur].nodes.find(n=>n.id===id); $('detail-lbl').textContent=n.label; refreshPlanList(); $('detail-view').classList.add('open'); }
+function switchT(idx) {
+    if (idx < 0) return;
+    if (idx >= tracks.length) tracks.push(mkT(`Track ${tracks.length+1}`));
+    cur = idx; rotAng = 0; orbitAng = 0; applyTheme(); renderPager(); render(); sync();
+}
+
+function nodeClick(id) { 
+    if (isConn) { if (!selId) { selId=id; $('conn-btn').textContent='Select target...'; } else if (selId!==id) { toggleConn(); } }
+    else openDetail(id); 
+}
+function toggleConn() { isConn=!isConn; selId=null; $('conn-btn').classList.toggle('on',isConn); $('conn-btn').textContent=isConn?'Select Target':'Polarity Snap'; }
+function openInject() { $('inj-ov').classList.add('open'); setTimeout(()=>$('node-inp').focus(),100); }
+function closeInject() { $('inj-ov').classList.remove('open'); $('node-inp').value=''; }
+function addNode() {
+    const v = $('node-inp').value.trim(); if(!v) return;
+    tracks[cur].nodes.push({id:Date.now(), label:v}); distribute();
+    closeInject(); // IMMEDIATE EXIT
+    render(); sync();
+}
+function onDown(e, id) { if(isConn) return; dragId=id; document.querySelector(`.node[data-id="${id}"]`).classList.add('dragging'); }
+function onMove(e) { if(!dragId) return; const r = $('canvas-container').getBoundingClientRect(), c=ctr(), dx = e.clientX-r.left-c.x, dy=e.clientY-r.top-c.y, n = tracks[cur].nodes.find(x=>x.id===dragId); if(n) { n.angle = Math.atan2(dy,dx)-rotAng; render(); } }
+function onUp() { if(!dragId) return; document.querySelectorAll('.node').forEach(n=>n.classList.remove('dragging')); dragId=null; distribute(); sync(); }
+function distribute() { const t=tracks[cur]; t.nodes.forEach((n,i)=>{ if(n.angle===undefined) n.angle=(i/t.nodes.length)*2*Math.PI; }); if(t.nodes.length>1) { t.conns = t.nodes.map((n,i)=>({id:`c-${n.id}`,s:n.id,t:t.nodes[(i+1)%t.nodes.length].id,type:'S'})); } else t.conns=[]; }
+function openDetail(id) { detId=id; const n=tracks[cur].nodes.find(x=>x.id===id); $('det-name').textContent=n.label; refreshPlans(); $('detail-view').classList.add('open'); }
 function closeDetail() { $('detail-view').classList.remove('open'); render(); }
-function refreshPlanList() { const list = $('plan-list'); list.innerHTML = ''; const plans = tracks[cur].sols[detId] || []; plans.forEach((p, i) => { const d = document.createElement('div'); d.className = 'plan-item'; d.innerHTML = `<span>${p}</span><div class="plan-del" onclick="removePlan(${i})">×</div>`; list.appendChild(d); }); }
-function addPlanToList() { const val = $('new-plan-inp').value.trim(); if (!val) return; if (!tracks[cur].sols[detId]) tracks[cur].sols[detId] = []; tracks[cur].sols[detId].push(val); $('new-plan-inp').value = ''; refreshPlanList(); syncLocal(); toast('Added'); }
-function removePlan(idx) { tracks[cur].sols[detId].splice(idx, 1); refreshPlanList(); syncLocal(); }
-function delNode() { if (!confirm('削除しますか?')) return; tracks[cur].nodes=tracks[cur].nodes.filter(n=>n.id!==detId); distribute(true); syncLocal(); closeDetail(); }
-function openSettings() { $('settings-view').classList.add('open'); $('tname-inp').value = tracks[cur].name; }
-function closeSettings() { $('settings-view').classList.remove('open'); }
-function renameTrack() { const v=$('tname-inp').value.trim(); if(!v) return; tracks[cur].name=v; applyTheme(); syncLocal(); closeSettings(); toast('Renamed'); }
+function refreshPlans() { const l=$('plan-list'); l.innerHTML=''; (tracks[cur].sols[detId]||[]).forEach((p,i)=>{ const d=document.createElement('div'); d.style.background='var(--bg2)'; d.style.padding='10px'; d.style.borderRadius='8px'; d.style.marginBottom='6px'; d.style.fontSize='12px'; d.textContent=p; l.appendChild(d); }); }
+function addPlan() { const v=$('plan-inp').value.trim(); if(!v) return; if(!tracks[cur].sols[detId]) tracks[cur].sols[detId]=[]; tracks[cur].sols[detId].push(v); $('plan-inp').value=''; refreshPlans(); render(); sync(); }
+function delNode() { if(!confirm('削除しますか？')) return; tracks[cur].nodes=tracks[cur].nodes.filter(x=>x.id!==detId); distribute(); closeDetail(); render(); sync(); }
+function alignOrbit() { rotAng=0; render(); }
+function toggleRot() { isRot=!isRot; $('rot-btn').textContent=isRot?'Stop':'Rotate'; }
 function openReset() { $('reset-ov').classList.add('open'); }
 function closeReset() { $('reset-ov').classList.remove('open'); }
-function clearCanvas() { tracks[cur]=mkT(`Track ${cur+1}`); closeReset(); applyTheme(); render(); syncLocal(); toast('Reset'); }
-function toggleRot() { isRot = !isRot; $('rot-btn').textContent = isRot ? 'Stop' : 'Rotate'; }
-function syncLocal() { localStorage.setItem('slc_v24_precision', JSON.stringify(tracks)); }
+function clearLoop() { tracks[cur]=mkT(tracks[cur].name); closeReset(); render(); sync(); }
+function sync() { localStorage.setItem('nimoloop_v25_final', JSON.stringify(tracks)); }
 function toast(msg) { const el=document.createElement('div'); el.className='toast'; el.textContent=msg; el.style.background=tracks[cur].cp.m; $('toasts').appendChild(el); setTimeout(()=>{el.remove()},2500); }
+function typeHint() { let h=HINTS[Math.floor(Math.random()*HINTS.length)], i=0, el=$('hint-text'); el.textContent=''; function tick(){ if(i<h.length){ el.textContent+=h[i++]; setTimeout(tick, 250); } } tick(); }
 </script>
 </body>
 </html>
