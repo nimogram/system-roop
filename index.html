@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>System Loop Creator v25.6</title>
+    <title>System Loop Creator v25.7</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            /* Absolute Default: Emerald & Lime */
+            /* Default: Emerald & Lime */
             --emerald: #10b981;
             --lime: #bef264;
             --c: var(--emerald);
@@ -75,7 +75,7 @@
         #hint-cursor { display: inline-block; width: 2px; height: 14px; background: var(--emerald); margin-left: 2px; vertical-align: middle; animation: blink 1s infinite; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        /* CANVAS - The center is absolute screen center */
+        /* CANVAS - Absolute Screen Center */
         #canvas-container { 
             position: fixed; 
             inset: 0; 
@@ -106,6 +106,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             transition: border-color 0.4s;
         }
+        .node.dragging { z-index: 100; border-color: #fff; }
         .node.sel { border-color: var(--lime); box-shadow: 0 0 15px var(--lime); }
         .node-dot {
             position: absolute; top: -5px; right: -5px;
@@ -263,7 +264,7 @@
 <div class="overlay" id="reset-ov">
     <div class="ov-card">
         <div style="font-family:'Syne';font-size:20px;font-weight:800;color:var(--danger);text-align:center;margin-bottom:10px;">Clear Loop</div>
-        <p style="text-align:center;font-size:12px;color:var(--mute);margin-bottom:20px;">現在の全データを消去します。</p>
+        <p style="text-align:center;font-size:12px;color:var(--mute);margin-bottom:20px;">現在のデータを消去します。</p>
         <div style="display:flex;gap:12px;">
             <button style="flex:1;padding:14px;background:transparent;border:1.5px solid var(--border);border-radius:12px;color:var(--mute);font-size:11px;font-weight:600;" onclick="closeReset()">Cancel</button>
             <button class="btn-p" style="background:var(--danger);box-shadow:none;" onclick="clearLoop()">CLEAR</button>
@@ -281,7 +282,7 @@ const $ = id => document.getElementById(id);
 const dyn = $('dynamic-layer'), svg = $('svg-layer'), defs = $('svg-defs');
 
 window.onload = () => {
-    const saved = localStorage.getItem('nimoloop_v25_6_absolute');
+    const saved = localStorage.getItem('nimoloop_v25_7');
     if (saved) tracks = JSON.parse(saved);
     if (!tracks.length) tracks = [mkT('Track 1')];
     applyTheme(); renderPager(); typeHint();
@@ -289,7 +290,6 @@ window.onload = () => {
     window.addEventListener('pointerup', onUp);
     window.addEventListener('resize', render);
     
-    // Swipe for new track logic
     document.body.addEventListener('touchstart', e => { txStart = e.touches[0].clientX; }, {passive:true});
     document.body.addEventListener('touchend', e => {
         if (document.querySelector('.view.open, .overlay.open')) return;
@@ -302,20 +302,19 @@ window.onload = () => {
 
 function mkT(name) {
     const randomPal = PAL[Math.floor(Math.random()*PAL.length)];
-    // Default to Emerald/Lime for the very first track
     const chosenPal = (tracks.length === 0) ? PAL[0] : randomPal;
     return { id: Date.now()+Math.random(), name, nodes:[], conns:[], sols:{}, cp: chosenPal };
 }
 
 function applyTheme() {
-    const t = tracks[cur];
-    document.documentElement.style.setProperty('--emerald', t.cp.m);
-    document.documentElement.style.setProperty('--lime', t.cp.l);
+    const t = tracks[cur], c = t.cp;
+    document.documentElement.style.setProperty('--emerald', c.m);
+    document.documentElement.style.setProperty('--lime', c.l);
     $('tname').textContent = t.name;
-    $('tname').style.color = t.cp.m;
-    $('bi').style.background = `linear-gradient(135deg, ${t.cp.m}, ${t.cp.l})`;
+    $('tname').style.color = c.m;
+    $('bi').style.background = `linear-gradient(135deg, ${c.m}, ${c.l})`;
     document.querySelectorAll('.btn-p').forEach(btn => {
-        if (!btn.style.background.includes('transparent')) btn.style.background = `linear-gradient(135deg, ${t.cp.m}, ${t.cp.l})`;
+        if (!btn.style.background.includes('transparent')) btn.style.background = `linear-gradient(135deg, ${c.m}, ${c.l})`;
     });
 }
 
@@ -338,7 +337,6 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-/* Absolute Center Calculation (Whole Device Screen) */
 function ctr() { return { x: window.innerWidth / 2, y: window.innerHeight / 2 }; }
 function getR() { return Math.min(window.innerWidth, window.innerHeight) * 0.35; }
 
@@ -451,8 +449,8 @@ function closeInject() { $('inj-ov').classList.remove('open'); $('node-inp').val
 function addNode() {
     const v = $('node-inp').value.trim(); if(!v) return;
     tracks[cur].nodes.push({id:Date.now(), label:v}); 
-    distribute(); // FORCE EQUAL SPACING
-    closeInject(); // IMMEDIATE RETURN
+    distribute(); // Registration Order logic inside
+    closeInject(); 
     render(); sync();
 }
 
@@ -460,12 +458,11 @@ function onDown(e, id) { if(isConn) return; dragId=id; document.querySelector(`.
 function onMove(e) { if(!dragId) return; const c=ctr(), dx = e.clientX-c.x, dy=e.clientY-c.y, n = tracks[cur].nodes.find(x=>x.id===dragId); if(n) { n.angle = Math.atan2(dy,dx)-rotAng; render(); } }
 function onUp() { if(!dragId) return; document.querySelectorAll('.node').forEach(n=>n.classList.remove('dragging')); dragId=null; distribute(); sync(); }
 
-/* ABSOLUTE EQUAL DISTRIBUTION LOGIC */
+/* EQUAL DISTRIBUTION BY REGISTRATION ORDER */
 function distribute() {
     const t = tracks[cur];
     if (t.nodes.length === 0) { t.conns = []; return; }
-    // Sort nodes by current angle to maintain general layout if possible
-    t.nodes.sort((a, b) => (a.angle || 0) - (b.angle || 0));
+    // NO SORTING: Keep the order nodes were pushed into the array
     t.nodes.forEach((n, i) => { n.angle = (i / t.nodes.length) * 2 * Math.PI; });
     if (t.nodes.length > 1) {
         t.conns = t.nodes.map((n, i) => {
@@ -487,7 +484,7 @@ function toggleRot() { isRot=!isRot; $('rot-btn').textContent=isRot?'Stop':'Rota
 function openReset() { $('reset-ov').classList.add('open'); }
 function closeReset() { $('reset-ov').classList.remove('open'); }
 function clearLoop() { tracks[cur]=mkT(tracks[cur].name); closeReset(); render(); sync(); }
-function sync() { localStorage.setItem('nimoloop_v25_6_absolute', JSON.stringify(tracks)); }
+function sync() { localStorage.setItem('nimoloop_v25_7', JSON.stringify(tracks)); }
 function toast(msg) { const el=document.createElement('div'); el.className='toast'; el.textContent=msg; el.style.background=tracks[cur].cp.m; $('toasts').appendChild(el); setTimeout(()=>{el.remove()},2500); }
 function typeHint() { let h=HINTS[Math.floor(Math.random()*HINTS.length)], i=0, el=$('hint-text'); el.textContent=''; function tick(){ if(i<h.length){ el.textContent+=h[i++]; setTimeout(tick, 250); } } tick(); }
 </script>
