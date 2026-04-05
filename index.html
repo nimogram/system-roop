@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>System Loop Creator v25.3</title>
+    <title>System Loop Creator v25.4</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -72,14 +72,30 @@
         #hint-banner::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--grad); }
         #hint-text { font-size: 13px; font-weight: 600; color: var(--emerald); text-align: center; line-height: 1.5; max-width: 90%; }
         #hint-cursor { display: inline-block; width: 2px; height: 14px; background: var(--emerald); margin-left: 2px; vertical-align: middle; animation: blink 1s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        #canvas-container { flex: 1; position: relative; overflow: hidden; background: var(--bg); display: flex; align-items: center; justify-content: center; }
+        /* CANVAS - Centering Anchor */
+        #canvas-container { 
+            flex: 1; 
+            position: relative; 
+            overflow: hidden; 
+            background: var(--bg); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        #canvas-container::before {
+            content: ''; position: absolute; inset: 0;
+            background-image: linear-gradient(rgba(255,255,255,0.013) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.013) 1px, transparent 1px);
+            background-size: 40px 40px; pointer-events: none;
+        }
+
+        #svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
         #dynamic-layer { position: absolute; inset: 0; pointer-events: none; }
         #dynamic-layer > * { pointer-events: auto; }
-        #svg-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 
         .ring-path { fill: none; stroke: var(--emerald); stroke-width: 2.5; opacity: 0.12; stroke-linecap: round; }
-        .flow-line-tapered { stroke: none; opacity: 0.95; }
+        .flow-line-tapered { stroke: none; opacity: 0.9; }
 
         .node {
             position: absolute; padding: 10px 24px;
@@ -90,7 +106,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             transition: border-color 0.4s;
         }
-        .node.dragging { z-index: 100; border-color: #fff; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+        .node.dragging { z-index: 100; border-color: #fff; }
         .node.sel { border-color: var(--lime); box-shadow: 0 0 15px var(--lime); }
         .node-dot {
             position: absolute; top: -5px; right: -5px;
@@ -133,8 +149,7 @@
             height: 42px; padding: 0 28px;
             background: rgba(11, 22, 40, 0.85); border: 1.5px solid var(--border); border-radius: var(--radius-pill);
             color: var(--mute); font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 600;
-            cursor: pointer; z-index: 100; backdrop-filter: blur(16px);
-            transition: all 0.3s;
+            cursor: pointer; z-index: 100; backdrop-filter: blur(16px); transition: all 0.3s;
         }
         #conn-btn.on { background: var(--grad); color: var(--bg); border-color: transparent; }
 
@@ -192,7 +207,7 @@
         <button class="hbtn" id="rot-btn" onclick="toggleRot()">Stop</button>
         <button class="hbtn">Sync</button>
         <button class="hbtn-ic" onclick="toast('Settings locked.')">
-            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
     </div>
 </header>
@@ -225,7 +240,7 @@
         <input type="text" id="node-inp" placeholder="Variable Name...">
         <div style="display:flex;gap:12px;">
             <button style="flex:1;padding:14px;background:transparent;border:1.5px solid var(--border);border-radius:12px;color:var(--mute);font-size:11px;font-weight:600;" onclick="closeInject()">Cancel</button>
-            <button class="btn-p" id="add-btn-final" onclick="addNode()">INJECT</button>
+            <button class="btn-p" onclick="addNode()">INJECT</button>
         </div>
     </div>
 </div>
@@ -267,20 +282,16 @@ const $ = id => document.getElementById(id);
 const dyn = $('dynamic-layer'), svg = $('svg-layer'), defs = $('svg-defs');
 
 window.onload = () => {
-    const saved = localStorage.getItem('nimoloop_v25_final');
+    const saved = localStorage.getItem('nimoloop_v25_precision');
     if (saved) tracks = JSON.parse(saved);
     if (!tracks.length) tracks = [mkT('Track 1')];
-    applyTheme(); renderPager(); typeHint();
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('resize', render);
-    
+    applyTheme(); renderPager(); typeHint(); setInterval(typeHint, 30000);
+    window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp); window.addEventListener('resize', render);
     $('canvas-container').addEventListener('touchstart', e => { txStart = e.touches[0].clientX; }, {passive:true});
     $('canvas-container').addEventListener('touchend', e => {
         const dx = e.changedTouches[0].clientX - txStart;
-        if (Math.abs(dx) > 85) switchT(cur + (dx > 0 ? -1 : 1));
+        if (Math.abs(dx) > 80) switchT(cur + (dx > 0 ? -1 : 1));
     });
-    
     requestAnimationFrame(loop);
 };
 
@@ -291,24 +302,15 @@ function mkT(name) {
 
 function applyTheme() {
     const t = tracks[cur];
-    document.documentElement.style.setProperty('--emerald', t.cp.m);
-    document.documentElement.style.setProperty('--lime', t.cp.l);
-    $('tname').textContent = t.name;
-    $('tname').style.color = t.cp.m;
+    document.documentElement.style.setProperty('--emerald', t.cp.m); document.documentElement.style.setProperty('--lime', t.cp.l);
+    $('tname').textContent = t.name; $('tname').style.color = t.cp.m;
     $('bi').style.background = `linear-gradient(135deg, ${t.cp.m}, ${t.cp.l})`;
-    document.querySelectorAll('.btn-p').forEach(btn => {
-        if (!btn.style.background.includes('transparent')) btn.style.background = `linear-gradient(135deg, ${t.cp.m}, ${t.cp.l})`;
-    });
+    document.querySelectorAll('.btn-p').forEach(btn => { if (!btn.style.background.includes('transparent')) btn.style.background = `linear-gradient(135deg, ${t.cp.m}, ${t.cp.l})`; });
 }
 
 function renderPager() {
     const p = $('pager'); p.innerHTML = '';
-    tracks.forEach((t, i) => {
-        const d = document.createElement('div');
-        d.className = 'dot' + (i===cur?' on':'');
-        if (i===cur) d.style.background = t.cp.m;
-        p.appendChild(d);
-    });
+    tracks.forEach((t, i) => { const d = document.createElement('div'); d.className = 'dot' + (i===cur?' on':''); if (i===cur) d.style.background = t.cp.m; p.appendChild(d); });
 }
 
 function loop() {
@@ -328,6 +330,7 @@ function getPos(n) {
     return { x: c.x + r * Math.cos(a), y: c.y + r * Math.sin(a), a, r };
 }
 
+/* Precision Tapered Path */
 function getTaperedPath(s, tg, r) {
     const steps = 40; const center = ctr();
     let diff = (tg.a - s.a) % (2 * Math.PI); if (diff < 0) diff += 2 * Math.PI;
@@ -345,19 +348,15 @@ function render() {
     const t = tracks[cur], c = ctr(), radius = getR();
     const activeIds = new Set(t.nodes.map(n => String(n.id)));
     $('orbit-ring').setAttribute('r', radius);
-    $('orbit-ring').style.stroke = t.cp.m;
     
-    // SVG Refresh
     while(svg.lastChild && svg.lastChild.id !== 'svg-defs' && svg.lastChild.id !== 'orbit-ring') svg.removeChild(svg.lastChild);
     while(defs.lastChild) defs.removeChild(defs.lastChild);
     
-    // Clear dynamic elements not belonging to active nodes
     document.querySelectorAll('.node, .sol-cloud, .pol-circle, .pol-label').forEach(el => {
         if (!activeIds.has(String(el.dataset.id)) && !el.classList.contains('pol-circle')) el.remove();
         if (el.classList.contains('pol-circle') || el.classList.contains('pol-label')) el.remove();
     });
 
-    // Arrows
     t.conns.forEach(conn => {
         const sn = t.nodes.find(n => n.id === conn.s), tn = t.nodes.find(n => n.id === conn.t);
         if (!sn || !tn) return;
@@ -383,7 +382,6 @@ function render() {
         head.setAttribute('points', `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
         head.setAttribute('fill', isS ? t.cp.l : '#f87171'); svg.appendChild(head);
 
-        // Polarity Labels
         let df = (tg.a - s.a) % (2 * Math.PI); if (df < 0) df += 2 * Math.PI;
         const midA = s.a + df/2, lx = c.x + radius*Math.cos(midA), ly = c.y + radius*Math.sin(midA);
         const pc = document.createElement('div'); pc.className='pol-circle'; pc.style.left=lx+'px'; pc.style.top=ly+'px'; pc.textContent='+'; pc.style.borderColor = isS?t.cp.m:'#f43f5e'; pc.style.color = isS?t.cp.m:'#f43f5e';
@@ -391,7 +389,6 @@ function render() {
         const pl = document.createElement('div'); pl.className='pol-label'; pl.style.left = (c.x + (radius+28)*Math.cos(midA))+'px'; pl.style.top = (c.y + (radius+28)*Math.sin(midA))+'px'; pl.textContent = conn.type; pl.style.color = isS?t.cp.l:'#f87171'; dyn.appendChild(pl);
     });
 
-    // Nodes & Action Clouds
     t.nodes.forEach(n => {
         const p = getPos(n);
         let el = document.querySelector(`.node[data-id="${n.id}"]`);
@@ -404,7 +401,6 @@ function render() {
         else if (plans.length===0 && dot) dot.remove();
         if(dot) dot.style.background = t.cp.l;
 
-        // Render Action Clouds around the node
         if (plans.length > 0 && !isConn) {
             plans.forEach((text, i) => {
                 const step = (2*Math.PI)/plans.length, clAng = orbitAng + (i*step), dist=85;
@@ -434,8 +430,7 @@ function closeInject() { $('inj-ov').classList.remove('open'); $('node-inp').val
 function addNode() {
     const v = $('node-inp').value.trim(); if(!v) return;
     tracks[cur].nodes.push({id:Date.now(), label:v}); distribute();
-    closeInject(); // IMMEDIATE EXIT
-    render(); sync();
+    closeInject(); render(); sync();
 }
 function onDown(e, id) { if(isConn) return; dragId=id; document.querySelector(`.node[data-id="${id}"]`).classList.add('dragging'); }
 function onMove(e) { if(!dragId) return; const r = $('canvas-container').getBoundingClientRect(), c=ctr(), dx = e.clientX-r.left-c.x, dy=e.clientY-r.top-c.y, n = tracks[cur].nodes.find(x=>x.id===dragId); if(n) { n.angle = Math.atan2(dy,dx)-rotAng; render(); } }
@@ -451,7 +446,7 @@ function toggleRot() { isRot=!isRot; $('rot-btn').textContent=isRot?'Stop':'Rota
 function openReset() { $('reset-ov').classList.add('open'); }
 function closeReset() { $('reset-ov').classList.remove('open'); }
 function clearLoop() { tracks[cur]=mkT(tracks[cur].name); closeReset(); render(); sync(); }
-function sync() { localStorage.setItem('nimoloop_v25_final', JSON.stringify(tracks)); }
+function sync() { localStorage.setItem('nimoloop_v25_precision', JSON.stringify(tracks)); }
 function toast(msg) { const el=document.createElement('div'); el.className='toast'; el.textContent=msg; el.style.background=tracks[cur].cp.m; $('toasts').appendChild(el); setTimeout(()=>{el.remove()},2500); }
 function typeHint() { let h=HINTS[Math.floor(Math.random()*HINTS.length)], i=0, el=$('hint-text'); el.textContent=''; function tick(){ if(i<h.length){ el.textContent+=h[i++]; setTimeout(tick, 250); } } tick(); }
 </script>
