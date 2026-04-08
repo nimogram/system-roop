@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>System Loop Creator v25.7</title>
+    <title>System Loop Creator v25.15</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            /* Default: Emerald & Lime */
             --emerald: #10b981;
             --lime: #bef264;
             --c: var(--emerald);
@@ -75,7 +74,6 @@
         #hint-cursor { display: inline-block; width: 2px; height: 14px; background: var(--emerald); margin-left: 2px; vertical-align: middle; animation: blink 1s infinite; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        /* CANVAS - Absolute Screen Center */
         #canvas-container { 
             position: fixed; 
             inset: 0; 
@@ -95,7 +93,7 @@
         #dynamic-layer > * { pointer-events: auto; }
 
         .ring-path { fill: none; stroke: var(--emerald); stroke-width: 2.5; opacity: 0.12; stroke-linecap: round; }
-        .flow-line-tapered { stroke: none; opacity: 0.9; }
+        .flow-line-tapered { stroke: none; opacity: 0.95; }
 
         .node {
             position: absolute; padding: 10px 24px;
@@ -162,10 +160,29 @@
             box-shadow: 0 10px 28px rgba(16, 185, 129, 0.4); border: none;
         }
 
-        .view { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 300; overflow-y: auto; }
-        .view.open { display: block; }
-        .v-inner { max-width: 440px; margin: 0 auto; padding: 24px 24px 80px; }
-        .v-back { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; color: var(--mute); font-size: 11px; font-weight: 600; cursor: pointer; margin-bottom: 24px; }
+        .view { 
+            position: fixed; 
+            top: 0; 
+            right: -100%; 
+            width: 85%; 
+            max-width: 440px;
+            height: 100dvh;
+            background: rgba(5, 12, 26, 0.15); 
+            backdrop-filter: blur(6px); 
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 300; 
+            overflow-y: auto; 
+            transition: right 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+            border-left: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: -20px 0 60px rgba(0,0,0,0.6);
+        }
+        .view.open { 
+            right: 0; 
+        }
+
+        .v-inner { padding: 24px 24px 80px; }
+        .v-back { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 11px; font-weight: 600; cursor: pointer; margin-bottom: 24px; transition: color 0.2s, background 0.2s; }
+        .v-back:hover { color: var(--emerald); background: rgba(255, 255, 255, 0.1); }
         
         .btn-p { 
             width: 100%; padding: 16px 20px; 
@@ -178,15 +195,24 @@
         .overlay.open { display: flex; }
         .ov-card { background: var(--bg2); border: 2.5px solid var(--emerald); border-radius: 28px; padding: 32px; width: 100%; max-width: 380px; }
         
-        input[type="text"] { 
-            width: 100%; background: var(--bg2) !important; border: 2px solid var(--border) !important; 
+        input[type="text"], textarea { 
+            width: 100%; background: rgba(255, 255, 255, 0.05) !important; border: 1px solid var(--border) !important; 
             border-radius: var(--radius-md) !important; padding: 16px 20px !important; 
-            color: var(--text) !important; font-family: 'Space Mono', monospace !important; font-size: 15px !important; outline: none; margin-bottom: 14px;
+            color: var(--text) !important; font-family: 'Space Mono', monospace !important; font-size: 14px !important; outline: none; margin-bottom: 14px;
         }
+        textarea { height: 160px; resize: none; line-height: 1.7; }
+        input[type="text"]:focus, textarea:focus { border-color: var(--emerald) !important; background: rgba(255, 255, 255, 0.08) !important; }
+
+        .card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 16px; }
+        .flabel { font-size: 10px; font-weight: 700; color: var(--mute); margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 1px; }
 
         #empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; z-index: 5; }
         .em-ring { width: 64px; height: 64px; border: 3px dashed var(--mute); border-radius: 50%; display: grid; place-items: center; opacity: 0.4; }
         .em-t { font-family:'Syne',sans-serif; font-size: 16px; font-weight: 700; color: var(--mute); opacity: 0.6; }
+
+        #toasts { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .toast { padding: 10px 20px; border-radius: 12px; color: #050c1a; font-size: 11px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.4); animation: toastIn 0.3s ease-out; }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -205,7 +231,7 @@
         <button class="hbtn" onclick="newTrack()">New</button>
         <button class="hbtn" onclick="alignOrbit()">Align</button>
         <button class="hbtn" id="rot-btn" onclick="toggleRot()">Stop</button>
-        <button class="hbtn">Sync</button>
+        <button class="hbtn" id="sync-btn" onclick="openCloudSync()">Sync</button>
         <button class="hbtn-ic" onclick="toast('Settings locked.')">
             <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
@@ -248,89 +274,158 @@
 <div class="view" id="detail-view">
     <div class="v-inner">
         <button class="v-back" onclick="closeDetail()">← Back</button>
-        <div id="det-name" style="font-family:'Syne';font-size:24px;font-weight:800;color:var(--emerald);margin-bottom:20px;">Variable</div>
+        
         <div class="card">
-            <div style="font-size:10px;color:var(--mute);margin-bottom:10px;font-weight:700;text-transform:uppercase;">Action Plans</div>
-            <div id="plan-list"></div>
-            <div style="display:flex;gap:10px;margin-top:10px;">
-                <input type="text" id="plan-inp" placeholder="Next step...">
+            <label class="flabel">Variable Name</label>
+            <input type="text" id="edit-node-name" oninput="updateNodeLabelFromView(this.value)" placeholder="Labeling...">
+        </div>
+
+        <div class="card">
+            <label class="flabel">Action Plans</label>
+            <div id="plan-list" style="margin-bottom:12px;"></div>
+            <div style="display:flex;gap:10px;">
+                <input type="text" id="plan-inp" placeholder="Add strategy...">
                 <button onclick="addPlan()" style="width:60px;height:52px;background:var(--grad);color:var(--bg);border:none;border-radius:12px;font-size:24px;font-weight:800;">+</button>
             </div>
         </div>
-        <button class="btn-p" style="background:transparent; border:1.5px solid var(--danger); color:var(--danger); font-size:12px;" onclick="delNode()">Delete Node</button>
+
+        <div class="card">
+            <label class="flabel">Narrative / Contextual Insight</label>
+            <textarea id="node-comment" placeholder="Document the story, causal background, or reasoning for this variable..." oninput="updateNodeCommentFromView(this.value)"></textarea>
+        </div>
+
+        <button class="btn-p" style="background:transparent; border:1.8px solid var(--danger); color:var(--danger); font-size:12px;" onclick="delNode()">Delete Node</button>
     </div>
 </div>
 
-<div class="overlay" id="reset-ov">
+<div class="overlay" id="sync-ov">
     <div class="ov-card">
-        <div style="font-family:'Syne';font-size:20px;font-weight:800;color:var(--danger);text-align:center;margin-bottom:10px;">Clear Loop</div>
-        <p style="text-align:center;font-size:12px;color:var(--mute);margin-bottom:20px;">現在のデータを消去します。</p>
-        <div style="display:flex;gap:12px;">
-            <button style="flex:1;padding:14px;background:transparent;border:1.5px solid var(--border);border-radius:12px;color:var(--mute);font-size:11px;font-weight:600;" onclick="closeReset()">Cancel</button>
-            <button class="btn-p" style="background:var(--danger);box-shadow:none;" onclick="clearLoop()">CLEAR</button>
+        <div style="font-family:'Syne';font-size:20px;font-weight:800;color:var(--emerald);text-align:center;margin-bottom:10px;">Cloud Sync</div>
+        <p style="text-align:center;font-size:12px;color:var(--mute);margin-bottom:20px;">スプレッドシートと同期します。</p>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <button class="btn-p" onclick="pushToCloud()">PUSH (保存)</button>
+            <button class="btn-p" style="background:var(--bg3); color:var(--emerald); border:1px solid var(--emerald); box-shadow:none;" onclick="fetchFromCloud()">FETCH (読込)</button>
+            <button style="padding:14px;background:transparent;border:none;color:var(--mute);font-size:11px;font-weight:600;" onclick="closeCloudSync()">Cancel</button>
         </div>
     </div>
 </div>
 
 <script>
+/* --- CONFIG --- */
+const GAS_URL = ""; // GASでデプロイしたWebアプリURLをここに貼ってください
+
+let tracks=[], cur=0, isRot=true, rotAng=0, orbitAng=0, isConn=false, selId=null, dragId=null, detId=null, txStart=0;
+const $ = id => document.getElementById(id);
+const dyn = $('dynamic-layer'), svg = $('svg-layer'), defs = $('svg-defs');
 const PAL = [{m:'#10b981',l:'#bef264'}, {m:'#06b6d4',l:'#a5f3fc'}, {m:'#8b5cf6',l:'#ddd6fe'}, {m:'#f59e0b',l:'#fef3c7'}, {m:'#ec4899',l:'#fbcfe8'}, {m:'#3b82f6',l:'#bfdbfe'}];
 const HINTS = ["「同じ問題が形を変えて何度も起きる」時、そこには必ず隠れたループがある。", "犯人を探すのをやめ、構造を探す。", "レバレッジポイントは、常に直感に反する場所にある。", "システムの挙動は、その目的と構造によって決定される。", "因果の根源を見極めるのが参謀の仕事です。"];
 
-let tracks=[], cur=0, isRot=true, rotAng=0, orbitAng=0, isConn=false, selId=null, dragId=null, detId=null, txStart=0;
-
-const $ = id => document.getElementById(id);
-const dyn = $('dynamic-layer'), svg = $('svg-layer'), defs = $('svg-defs');
-
 window.onload = () => {
-    const saved = localStorage.getItem('nimoloop_v25_7');
+    const saved = localStorage.getItem('nimoloop_v25_15_persistence');
     if (saved) tracks = JSON.parse(saved);
     if (!tracks.length) tracks = [mkT('Track 1')];
     applyTheme(); renderPager(); typeHint();
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('resize', render);
-    
     document.body.addEventListener('touchstart', e => { txStart = e.touches[0].clientX; }, {passive:true});
     document.body.addEventListener('touchend', e => {
         if (document.querySelector('.view.open, .overlay.open')) return;
         const dx = e.changedTouches[0].clientX - txStart;
         if (Math.abs(dx) > 80) switchT(cur + (dx > 0 ? -1 : 1));
     });
-    
     requestAnimationFrame(loop);
 };
 
+/* --- CLOUD SYNC LOGIC --- */
+function openCloudSync() { $('sync-ov').classList.add('open'); }
+function closeCloudSync() { $('sync-ov').classList.remove('open'); }
+
+async function pushToCloud() {
+    if (!GAS_URL) { toast("GAS URLが設定されていません。"); return; }
+    const btn = $('sync-btn');
+    const originalText = btn.textContent;
+    btn.textContent = "Syncing...";
+    closeCloudSync();
+
+    try {
+        const payload = {
+            title: "NimoSystemLoop_Main",
+            data: tracks
+        };
+        const res = await fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result.status === "success") {
+            toast("Cloud Push Successful.");
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (e) {
+        console.error(e);
+        toast("Cloud Push Failed.");
+    } finally {
+        btn.textContent = originalText;
+    }
+}
+
+async function fetchFromCloud() {
+    if (!GAS_URL) { toast("GAS URLが設定されていません。"); return; }
+    const btn = $('sync-btn');
+    const originalText = btn.textContent;
+    btn.textContent = "Syncing...";
+    closeCloudSync();
+
+    try {
+        const res = await fetch(GAS_URL);
+        const list = await res.json();
+        if (list && list.length > 0) {
+            // 最も新しい（リストの最後）のデータを取得
+            const latest = list[list.length - 1];
+            if (latest && latest.data) {
+                tracks = latest.data;
+                cur = 0;
+                applyTheme();
+                renderPager();
+                render();
+                sync(); // ローカルにも保存
+                toast("Cloud Fetch Successful.");
+            }
+        } else {
+            toast("No data found on Cloud.");
+        }
+    } catch (e) {
+        console.error(e);
+        toast("Cloud Fetch Failed.");
+    } finally {
+        btn.textContent = originalText;
+    }
+}
+
 function mkT(name) {
-    const randomPal = PAL[Math.floor(Math.random()*PAL.length)];
-    const chosenPal = (tracks.length === 0) ? PAL[0] : randomPal;
-    return { id: Date.now()+Math.random(), name, nodes:[], conns:[], sols:{}, cp: chosenPal };
+    const chosenPal = (tracks.length === 0) ? PAL[0] : PAL[Math.floor(Math.random()*PAL.length)];
+    return { id: Date.now()+Math.random(), name, nodes:[], conns:[], sols:{}, comments:{}, cp: chosenPal };
 }
 
 function applyTheme() {
     const t = tracks[cur], c = t.cp;
     document.documentElement.style.setProperty('--emerald', c.m);
     document.documentElement.style.setProperty('--lime', c.l);
-    $('tname').textContent = t.name;
-    $('tname').style.color = c.m;
+    $('tname').textContent = t.name; $('tname').style.color = c.m;
     $('bi').style.background = `linear-gradient(135deg, ${c.m}, ${c.l})`;
-    document.querySelectorAll('.btn-p').forEach(btn => {
-        if (!btn.style.background.includes('transparent')) btn.style.background = `linear-gradient(135deg, ${c.m}, ${c.l})`;
-    });
+    document.querySelectorAll('.btn-p').forEach(btn => { if (!btn.style.background.includes('transparent')) btn.style.background = `linear-gradient(135deg, ${c.m}, ${c.l})`; });
 }
 
 function renderPager() {
     const p = $('pager'); p.innerHTML = '';
-    tracks.forEach((t, i) => {
-        const d = document.createElement('div');
-        d.className = 'dot' + (i===cur?' on':'');
-        if (i===cur) d.style.background = t.cp.m;
-        p.appendChild(d);
-    });
+    tracks.forEach((t, i) => { const d = document.createElement('div'); d.className = 'dot' + (i===cur?' on':''); if (i===cur) d.style.background = t.cp.m; p.appendChild(d); });
 }
 
 function loop() {
-    const modalOpen = document.querySelector('.view.open, .overlay.open');
-    if (isRot && tracks[cur].nodes.length > 0 && !dragId && !modalOpen) {
+    const overlayOpen = document.querySelector('.overlay.open');
+    if (isRot && tracks[cur].nodes.length > 0 && !dragId && !overlayOpen) {
         rotAng += 0.003; orbitAng -= 0.005;
         render();
     }
@@ -339,17 +434,13 @@ function loop() {
 
 function ctr() { return { x: window.innerWidth / 2, y: window.innerHeight / 2 }; }
 function getR() { return Math.min(window.innerWidth, window.innerHeight) * 0.35; }
-
-function getPos(n) {
-    const c = ctr(), r = getR(), a = (n.angle || 0) + rotAng;
-    return { x: c.x + r * Math.cos(a), y: c.y + r * Math.sin(a), a, r };
-}
+function getPos(n) { const c = ctr(), r = getR(), a = (n.angle || 0) + rotAng; return { x: c.x + r * Math.cos(a), y: c.y + r * Math.sin(a), a, r }; }
 
 function getTaperedPath(s, tg, r) {
     const steps = 40; const center = ctr();
     let diff = (tg.a - s.a) % (2 * Math.PI); if (diff < 0) diff += 2 * Math.PI;
     if (diff < 0.1) return "";
-    const op = []; const ip = [];
+    const op = [], ip = [];
     for (let i = 0; i <= steps; i++) {
         const ratio = i / steps, ang = s.a + diff * ratio, w = 7.0 - (6.2 * ratio);
         op.push({ x: center.x + (r + w) * Math.cos(ang), y: center.y + (r + w) * Math.sin(ang) });
@@ -361,130 +452,72 @@ function getTaperedPath(s, tg, r) {
 function render() {
     const t = tracks[cur], c = ctr(), radius = getR();
     const activeIds = new Set(t.nodes.map(n => String(n.id)));
-    
-    const ring = $('orbit-ring');
-    ring.setAttribute('cx', c.x); ring.setAttribute('cy', c.y);
-    ring.setAttribute('r', radius); ring.style.stroke = t.cp.m;
-    
+    const ring = $('orbit-ring'); ring.setAttribute('cx', c.x); ring.setAttribute('cy', c.y); ring.setAttribute('r', radius); ring.style.stroke = t.cp.m;
     while(svg.lastChild && svg.lastChild.id !== 'svg-defs' && svg.lastChild.id !== 'orbit-ring') svg.removeChild(svg.lastChild);
     while(defs.lastChild) defs.removeChild(defs.lastChild);
-    
-    document.querySelectorAll('.node, .sol-cloud, .pol-circle, .pol-label').forEach(el => {
-        if (!activeIds.has(String(el.dataset.id)) && !el.classList.contains('pol-circle')) el.remove();
-        if (el.classList.contains('pol-circle') || el.classList.contains('pol-label')) el.remove();
-    });
-
+    document.querySelectorAll('.node, .sol-cloud, .pol-circle, .pol-label').forEach(el => { if (!activeIds.has(String(el.dataset.id)) && !el.classList.contains('pol-circle')) el.remove(); if (el.classList.contains('pol-circle') || el.classList.contains('pol-label')) el.remove(); });
     t.conns.forEach(conn => {
         const sn = t.nodes.find(n => n.id === conn.s), tn = t.nodes.find(n => n.id === conn.t);
         if (!sn || !tn) return;
         const s = getPos(sn), tg = getPos(tn), isS = conn.type === 'S', gid = `g-${conn.id}`;
         const grad = document.createElementNS('http://www.w3.org/2000/svg','linearGradient');
-        grad.setAttribute('id', gid); grad.setAttribute('gradientUnits','userSpaceOnUse');
-        grad.setAttribute('x1', s.x); grad.setAttribute('y1', s.y); grad.setAttribute('x2', tg.x); grad.setAttribute('y2', tg.y);
-        [[0, isS?t.cp.m:'#f43f5e'], [1, isS?t.cp.l:'#f87171']].forEach(([off, col]) => {
-            const st = document.createElementNS('http://www.w3.org/2000/svg','stop');
-            st.setAttribute('offset', off*100+'%'); st.setAttribute('stop-color', col); grad.appendChild(st);
-        });
+        grad.setAttribute('id', gid); grad.setAttribute('gradientUnits','userSpaceOnUse'); grad.setAttribute('x1', s.x); grad.setAttribute('y1', s.y); grad.setAttribute('x2', tg.x); grad.setAttribute('y2', tg.y);
+        [[0, isS?t.cp.m:'#f43f5e'], [1, isS?t.cp.l:'#f87171']].forEach(([off, col]) => { const st = document.createElementNS('http://www.w3.org/2000/svg','stop'); st.setAttribute('offset', off*100+'%'); st.setAttribute('stop-color', col); grad.appendChild(st); });
         defs.appendChild(grad);
         const d = getTaperedPath(s, tg, radius);
-        if (d) {
-            const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-            path.setAttribute('d', d); path.setAttribute('fill', `url(#${gid})`); path.setAttribute('class','flow-line-tapered'); svg.appendChild(path);
-        }
-        const head = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-        const hs = 13;
-        const p1 = { x: tg.x + hs*Math.cos(tg.a), y: tg.y + hs*Math.sin(tg.a) };
-        const p2 = { x: tg.x + (hs/2)*Math.cos(tg.a+2.5), y: tg.y + (hs/2)*Math.sin(tg.a+2.5) };
-        const p3 = { x: tg.x + (hs/2)*Math.cos(tg.a-2.5), y: tg.y + (hs/2)*Math.sin(tg.a-2.5) };
-        head.setAttribute('points', `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
-        head.setAttribute('fill', isS ? t.cp.l : '#f87171'); svg.appendChild(head);
-
+        if (d) { const path = document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d', d); path.setAttribute('fill', `url(#${gid})`); path.setAttribute('class','flow-line-tapered'); svg.appendChild(path); }
+        const head = document.createElementNS('http://www.w3.org/2000/svg','polygon'), hs = 13;
+        const p1 = { x: tg.x + hs*Math.cos(tg.a), y: tg.y + hs*Math.sin(tg.a) }, p2 = { x: tg.x + (hs/2)*Math.cos(tg.a+2.5), y: tg.y + (hs/2)*Math.sin(tg.a+2.5) }, p3 = { x: tg.x + (hs/2)*Math.cos(tg.a-2.5), y: tg.y + (hs/2)*Math.sin(tg.a-2.5) };
+        head.setAttribute('points', `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`); head.setAttribute('fill', isS ? t.cp.l : '#f87171'); svg.appendChild(head);
         let df = (tg.a - s.a) % (2 * Math.PI); if (df < 0) df += 2 * Math.PI;
         const midA = s.a + df/2, lx = c.x + radius*Math.cos(midA), ly = c.y + radius*Math.sin(midA);
         const pc = document.createElement('div'); pc.className='pol-circle'; pc.style.left=lx+'px'; pc.style.top=ly+'px'; pc.textContent='+'; pc.style.borderColor = isS?t.cp.m:'#f43f5e'; pc.style.color = isS?t.cp.m:'#f43f5e';
         pc.onclick = () => { if(!isRot) { conn.type = isS?'O':'S'; render(); sync(); } }; dyn.appendChild(pc);
         const pl = document.createElement('div'); pl.className='pol-label'; pl.style.left = (c.x + (radius+28)*Math.cos(midA))+'px'; pl.style.top = (c.y + (radius+28)*Math.sin(midA))+'px'; pl.textContent = conn.type; pl.style.color = isS?t.cp.l:'#f87171'; dyn.appendChild(pl);
     });
-
     t.nodes.forEach(n => {
         const p = getPos(n);
         let el = document.querySelector(`.node[data-id="${n.id}"]`);
         if (!el) { el=document.createElement('div'); el.className='node'; el.dataset.id=n.id; el.onclick=()=>nodeClick(n.id); el.onpointerdown=e=>onDown(e,n.id); dyn.appendChild(el); }
         el.style.left=p.x+'px'; el.style.top=p.y+'px'; el.textContent=n.label; el.classList.toggle('sel', selId===n.id); el.style.borderColor=t.cp.m;
-
         const plans = t.sols[n.id] || [];
-        let dot = el.querySelector('.node-dot');
-        if (plans.length > 0 && !dot) { dot=document.createElement('div'); dot.className='node-dot'; el.appendChild(dot); }
-        else if (plans.length===0 && dot) dot.remove();
-        if(dot) dot.style.background = t.cp.l;
-
+        let dot = el.querySelector('.node-dot'); if (plans.length > 0 && !dot) { dot=document.createElement('div'); dot.className='node-dot'; el.appendChild(dot); } else if (plans.length===0 && dot) dot.remove(); if(dot) dot.style.background = t.cp.l;
         if (plans.length > 0 && !isConn) {
             plans.forEach((text, i) => {
                 const step = (2*Math.PI)/plans.length, clAng = orbitAng + (i*step), dist=85;
                 const cx = p.x + dist*Math.cos(clAng), cy = p.y + dist*Math.sin(clAng);
-                let cl = document.querySelector(`.sol-cloud[data-id="${n.id}"][data-idx="${i}"]`);
-                if(!cl) { cl=document.createElement('div'); cl.className='sol-cloud'; cl.dataset.id=n.id; cl.dataset.idx=i; cl.onclick=e=>{ e.stopPropagation(); openDetail(n.id); }; dyn.appendChild(cl); }
-                cl.style.left=cx+'px'; cl.style.top=cy+'px'; cl.textContent=text.substring(0,20)+(text.length>20?'..':''); cl.style.borderColor=t.cp.m;
+                let cl = document.querySelector(`.sol-cloud[data-id="${n.id}"][data-idx="${i}"]`); if(!cl) { cl=document.createElement('div'); cl.className='sol-cloud'; cl.dataset.id=n.id; cl.dataset.idx=i; cl.onclick=e=>{ e.stopPropagation(); openDetail(n.id); }; dyn.appendChild(cl); }
+                cl.style.left=cx+'px'; cl.style.top=cy+'px'; cl.textContent=text.substring(0,18)+(text.length>18?'..':''); cl.style.borderColor=t.cp.m;
             });
         }
     });
-    $('empty').style.display = t.nodes.length===0?'flex':'none';
-    $('empty').style.left = c.x + 'px'; $('empty').style.top = c.y + 'px';
+    $('empty').style.display = t.nodes.length===0?'flex':'none'; $('empty').style.left = c.x + 'px'; $('empty').style.top = c.y + 'px';
 }
 
-function switchT(idx) {
-    if (idx < 0) return;
-    if (idx >= tracks.length) tracks.push(mkT(`Track ${tracks.length+1}`));
-    cur = idx; rotAng = 0; orbitAng = 0; applyTheme(); renderPager(); render(); sync();
-}
-
-function nodeClick(id) { 
-    if (isConn) { if (!selId) { selId=id; $('conn-btn').textContent='Select target...'; } else if (selId!==id) { toggleConn(); } }
-    else openDetail(id); 
-}
+function switchT(idx) { if (idx < 0) return; if (idx >= tracks.length) tracks.push(mkT(`Track ${tracks.length+1}`)); cur = idx; rotAng = 0; orbitAng = 0; applyTheme(); renderPager(); render(); sync(); }
+function nodeClick(id) { if (isConn) { if (!selId) { selId=id; $('conn-btn').textContent='Select target...'; } else if (selId!==id) { toggleConn(); } } else openDetail(id); }
 function toggleConn() { isConn=!isConn; selId=null; $('conn-btn').classList.toggle('on',isConn); $('conn-btn').textContent=isConn?'Select Target':'Polarity Snap'; }
 function openInject() { $('inj-ov').classList.add('open'); setTimeout(()=>$('node-inp').focus(),100); }
 function closeInject() { $('inj-ov').classList.remove('open'); $('node-inp').value=''; }
-
-function addNode() {
-    const v = $('node-inp').value.trim(); if(!v) return;
-    tracks[cur].nodes.push({id:Date.now(), label:v}); 
-    distribute(); // Registration Order logic inside
-    closeInject(); 
-    render(); sync();
-}
-
+function addNode() { const v = $('node-inp').value.trim(); if(!v) return; tracks[cur].nodes.push({id:Date.now(), label:v}); distribute(); closeInject(); render(); sync(); }
 function onDown(e, id) { if(isConn) return; dragId=id; document.querySelector(`.node[data-id="${id}"]`).classList.add('dragging'); }
-function onMove(e) { if(!dragId) return; const c=ctr(), dx = e.clientX-c.x, dy=e.clientY-c.y, n = tracks[cur].nodes.find(x=>x.id===dragId); if(n) { n.angle = Math.atan2(dy,dx)-rotAng; render(); } }
+function onMove(e) { if(!dragId) return; const c=ctr(), dx = e.clientX-c.x, dy = e.clientY-c.y, n = tracks[cur].nodes.find(x=>x.id===dragId); if(n) { n.angle = Math.atan2(dy,dx)-rotAng; render(); } }
 function onUp() { if(!dragId) return; document.querySelectorAll('.node').forEach(n=>n.classList.remove('dragging')); dragId=null; distribute(); sync(); }
-
-/* EQUAL DISTRIBUTION BY REGISTRATION ORDER */
-function distribute() {
-    const t = tracks[cur];
-    if (t.nodes.length === 0) { t.conns = []; return; }
-    // NO SORTING: Keep the order nodes were pushed into the array
-    t.nodes.forEach((n, i) => { n.angle = (i / t.nodes.length) * 2 * Math.PI; });
-    if (t.nodes.length > 1) {
-        t.conns = t.nodes.map((n, i) => {
-            const existing = t.conns.find(c => c.s === n.id);
-            return { id: `c-${n.id}`, s: n.id, t: t.nodes[(i + 1) % t.nodes.length].id, type: existing ? existing.type : 'S' };
-        });
-    } else t.conns = [];
-}
-
-function openDetail(id) { detId=id; const n=tracks[cur].nodes.find(x=>x.id===id); $('det-name').textContent=n.label; refreshPlans(); $('detail-view').classList.add('open'); }
-function closeDetail() { $('detail-view').classList.remove('open'); render(); }
-function refreshPlans() { const l=$('plan-list'); l.innerHTML=''; (tracks[cur].sols[detId]||[]).forEach((p,i)=>{ const d=document.createElement('div'); d.style.background='var(--bg2)'; d.style.padding='10px'; d.style.borderRadius='8px'; d.style.marginBottom='6px'; d.style.fontSize='12px'; d.textContent=p; l.appendChild(d); }); }
+function distribute() { const t = tracks[cur]; if (t.nodes.length === 0) { t.conns = []; return; } t.nodes.forEach((n, i) => { n.angle = (i / t.nodes.length) * 2 * Math.PI; }); if (t.nodes.length > 1) { t.conns = t.nodes.map((n, i) => { const existing = t.conns.find(c => c.s === n.id); return { id: `c-${n.id}`, s: n.id, t: t.nodes[(i + 1) % t.nodes.length].id, type: existing ? existing.type : 'S' }; }); } else t.conns = []; }
+function openDetail(id) { detId=id; const n=tracks[cur].nodes.find(x=>x.id===id); $('edit-node-name').value = n.label; $('node-comment').value = tracks[cur].comments[id] || ''; refreshPlans(); $('detail-view').classList.add('open'); }
+function closeDetail() { $('detail-view').classList.remove('open'); render(); sync(); }
+function updateNodeLabelFromView(val) { const n = tracks[cur].nodes.find(x=>x.id===detId); if(n) n.label = val; render(); }
+function updateNodeCommentFromView(val) { tracks[cur].comments[detId] = val; }
+function refreshPlans() { const l=$('plan-list'); l.innerHTML=''; (tracks[cur].sols[detId]||[]).forEach((p,i)=>{ const d=document.createElement('div'); d.style.background='rgba(255, 255, 255, 0.05)'; d.style.padding='12px'; d.style.borderRadius='8px'; d.style.marginBottom='6px'; d.style.fontSize='12px'; d.textContent=p; l.appendChild(d); }); }
 function addPlan() { const v=$('plan-inp').value.trim(); if(!v) return; if(!tracks[cur].sols[detId]) tracks[cur].sols[detId]=[]; tracks[cur].sols[detId].push(v); $('plan-inp').value=''; refreshPlans(); render(); sync(); }
-function delNode() { if(!confirm('削除しますか？')) return; tracks[cur].nodes=tracks[cur].nodes.filter(x=>x.id!==detId); distribute(); closeDetail(); render(); sync(); }
-
+function delNode() { if(!confirm('ノードを削除しますか？')) return; tracks[cur].nodes=tracks[cur].nodes.filter(x=>x.id!==detId); distribute(); closeDetail(); }
 function newTrack() { switchT(tracks.length); }
 function alignOrbit() { rotAng=0; render(); }
 function toggleRot() { isRot=!isRot; $('rot-btn').textContent=isRot?'Stop':'Rotate'; }
 function openReset() { $('reset-ov').classList.add('open'); }
 function closeReset() { $('reset-ov').classList.remove('open'); }
 function clearLoop() { tracks[cur]=mkT(tracks[cur].name); closeReset(); render(); sync(); }
-function sync() { localStorage.setItem('nimoloop_v25_7', JSON.stringify(tracks)); }
+function sync() { localStorage.setItem('nimoloop_v25_15_persistence', JSON.stringify(tracks)); }
 function toast(msg) { const el=document.createElement('div'); el.className='toast'; el.textContent=msg; el.style.background=tracks[cur].cp.m; $('toasts').appendChild(el); setTimeout(()=>{el.remove()},2500); }
 function typeHint() { let h=HINTS[Math.floor(Math.random()*HINTS.length)], i=0, el=$('hint-text'); el.textContent=''; function tick(){ if(i<h.length){ el.textContent+=h[i++]; setTimeout(tick, 250); } } tick(); }
 </script>
